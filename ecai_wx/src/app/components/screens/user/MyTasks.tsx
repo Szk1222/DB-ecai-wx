@@ -139,7 +139,7 @@ export function MyTasks() {
               {/* Progress bar */}
               <div className="mt-3">
                 <div className="flex justify-between text-xs text-gray-500 mb-1">
-                  <span>完成进度 {ut.progress}/{ut.total}</span>
+                  <span>我的采集进度 {ut.progress}/{ut.total}</span>
                   <span>截止 {ut.expiresAt}</span>
                 </div>
                 <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">

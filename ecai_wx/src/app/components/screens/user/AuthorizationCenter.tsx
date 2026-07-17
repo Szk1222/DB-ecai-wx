@@ -14,13 +14,13 @@ const statusMeta = {
 export function AuthorizationCenter() {
   const { navigate } = useApp();
   const [filter, setFilter] = useState<Filter>('all');
-  const [expandedId, setExpandedId] = useState<string>('auth001');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const activeCount = AUTHORIZATION_RECORDS.filter((record) => record.status === 'active').length;
   const filtered = AUTHORIZATION_RECORDS.filter((record) => filter === 'all' || (filter === 'active' ? record.status === 'active' : record.status !== 'active'));
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto">
-      <div className="relative px-5 pt-2 pb-5 overflow-hidden" style={{ background: 'linear-gradient(145deg, #293A4D 0%, #3B536B 100%)' }}>
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="relative z-10 flex-shrink-0 px-5 pt-2 pb-5 overflow-hidden" style={{ background: 'linear-gradient(145deg, #293A4D 0%, #3B536B 100%)' }}>
         <div className="absolute -right-12 -top-14 w-40 h-40 rounded-full border border-white/10" />
         <div className="relative flex items-center gap-3 mb-5">
           <button onClick={() => navigate('my-profile')} className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center active:bg-white/25" aria-label="返回">
@@ -33,14 +33,14 @@ export function AuthorizationCenter() {
             <ShieldCheck size={26} color="white" />
           </div>
           <div className="flex-1">
-            <p className="text-sm font-semibold text-white">我的数据由我掌控</p>
+            <p className="text-sm font-semibold text-white">授权数据详情</p>
             <p className="text-xs text-white/55 mt-1">共 {AUTHORIZATION_RECORDS.length} 条记录，{activeCount} 项授权生效中</p>
           </div>
           <div className="w-2 h-2 rounded-full bg-[#7DDFC8] shadow-[0_0_0_5px_rgba(125,223,200,.12)]" />
         </div>
       </div>
 
-      <div className="px-4 pt-3 pb-1">
+      <div className="relative z-[5] flex-shrink-0 bg-[#F5F6F8] px-4 pt-3 pb-2 border-b border-gray-100">
         <div className="grid grid-cols-3 gap-1 rounded-xl bg-[#E9EBEE] p-1">
           {([
             ['all', `全部 ${AUTHORIZATION_RECORDS.length}`],
@@ -52,15 +52,17 @@ export function AuthorizationCenter() {
         </div>
       </div>
 
-      <div className="px-4 py-3 space-y-3">
-        {filtered.map((record) => (
-          <AuthorizationCard key={record.id} record={record} expanded={expandedId === record.id} onToggle={() => setExpandedId(expandedId === record.id ? '' : record.id)} />
-        ))}
-      </div>
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
+        <div className="px-4 py-3 space-y-3">
+          {filtered.map((record) => (
+            <AuthorizationCard key={record.id} record={record} expanded={expandedId === record.id} onToggle={() => setExpandedId(expandedId === record.id ? null : record.id)} />
+          ))}
+        </div>
 
-      <div className="mx-4 mb-5 rounded-2xl border border-[#D5EEE8] bg-[#F0FAF8] px-4 py-3 flex gap-2.5">
-        <Fingerprint size={18} color="#3DBFA0" className="flex-shrink-0 mt-0.5" />
-        <p className="text-[11px] leading-5 text-[#4D7C71]">平台完整记录每次授权的配置与操作人。授权到期后，相关机构将无法继续获取新增数据。</p>
+        <div className="mx-4 mb-5 rounded-2xl border border-[#D5EEE8] bg-[#F0FAF8] px-4 py-3 flex gap-2.5">
+          <Fingerprint size={18} color="#3DBFA0" className="flex-shrink-0 mt-0.5" />
+          <p className="text-[11px] leading-5 text-[#4D7C71]">平台完整记录每次授权的配置与操作人。授权到期后，相关机构将无法继续获取新增数据。</p>
+        </div>
       </div>
     </div>
   );

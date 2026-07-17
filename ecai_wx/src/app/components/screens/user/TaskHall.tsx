@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TASKS } from '../../../data/mockData';
+import { TASKS, type TaskType } from '../../../data/mockData';
 import { TaskCard } from '../../common/TaskCard';
 import { useApp } from '../../../context/AppContext';
 
@@ -27,25 +27,93 @@ function SearchBar() {
   );
 }
 
-function FilterRow() {
-  const [lang, setLang] = useState('全部');
-  const langs = ['全部', '普通话', '粤语', '英语'];
+type TaskTypeFilter = 'all' | TaskType;
+
+interface TaskFiltersProps {
+  taskType: TaskTypeFilter;
+  language: string;
+  onTaskTypeChange: (taskType: TaskTypeFilter) => void;
+  onLanguageChange: (language: string) => void;
+}
+
+function TaskFilters({ taskType, language, onTaskTypeChange, onLanguageChange }: TaskFiltersProps) {
+  const showLanguageFilter = taskType === 'voice' || taskType === 'text';
+  const availableLanguages = showLanguageFilter
+    ? Array.from(new Set(TASKS.filter((task) => task.type === taskType).flatMap((task) => task.languages)))
+    : [];
+
   return (
-    <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-      {langs.map((l) => (
+    <div>
+      <div className="flex items-center gap-2">
         <button
-          key={l}
-          className="flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium border transition-all"
+          type="button"
+          className="h-8 px-4 rounded-full text-xs font-semibold border transition-all"
           style={{
-            background: lang === l ? '#3DBFA0' : '#fff',
-            borderColor: lang === l ? '#3DBFA0' : '#E5E7EB',
-            color: lang === l ? '#fff' : '#6B7280',
+            background: taskType === 'all' ? '#3DBFA0' : '#fff',
+            borderColor: taskType === 'all' ? '#3DBFA0' : '#E5E7EB',
+            color: taskType === 'all' ? '#fff' : '#6B7280',
           }}
-          onClick={() => setLang(l)}
+          onClick={() => onTaskTypeChange('all')}
+          aria-pressed={taskType === 'all'}
         >
-          {l}
+          全部
         </button>
-      ))}
+
+        <div
+          className="relative h-8 rounded-full border overflow-hidden transition-colors"
+          style={{
+            background: taskType !== 'all' ? '#F0FAF8' : '#fff',
+            borderColor: taskType !== 'all' ? '#3DBFA0' : '#E5E7EB',
+          }}
+        >
+          <select
+            className="h-full appearance-none bg-transparent pl-4 pr-9 text-xs font-semibold outline-none cursor-pointer"
+            style={{ color: taskType !== 'all' ? '#258F78' : '#6B7280' }}
+            value={taskType === 'all' ? '' : taskType}
+            onChange={(event) => onTaskTypeChange(event.target.value as TaskType)}
+            aria-label="选择项目类型"
+          >
+            <option value="" disabled>项目类型</option>
+            <option value="voice">语音</option>
+            <option value="text">文本</option>
+            <option value="image">图片</option>
+          </select>
+          <svg
+            className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
+            width="12"
+            height="12"
+            viewBox="0 0 12 12"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path d="M3 4.5 6 7.5l3-3" stroke={taskType !== 'all' ? '#258F78' : '#9CA3AF'} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+      </div>
+
+      {showLanguageFilter && (
+        <div className="mt-2.5 flex items-center gap-2 overflow-x-auto no-scrollbar">
+          {['all', ...availableLanguages].map((item) => {
+            const selected = language === item;
+            return (
+              <button
+                type="button"
+                key={item}
+                className="flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium border transition-all"
+                style={{
+                  background: selected ? '#E8F7F4' : '#fff',
+                  borderColor: selected ? '#9DDBCD' : '#E5E7EB',
+                  color: selected ? '#258F78' : '#6B7280',
+                }}
+                onClick={() => onLanguageChange(item)}
+                aria-pressed={selected}
+              >
+                {item === 'all' ? '全部语言' : item}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -53,12 +121,20 @@ function FilterRow() {
 export function TaskHall() {
   const { navigate } = useApp();
   const [activeTab, setActiveTab] = useState(0);
+  const [taskType, setTaskType] = useState<TaskTypeFilter>('all');
+  const [language, setLanguage] = useState('all');
 
   const filtered = TASKS.filter((t) => {
-    if (activeTab === 0) return t.isRecommended;
-    if (activeTab === 1) return !t.isDirected;
-    if (activeTab === 2) return t.isDirected;
-    return true;
+    const matchesTab = activeTab === 0
+      ? t.isRecommended
+      : activeTab === 1
+      ? !t.isDirected
+      : activeTab === 2
+      ? t.isDirected
+      : true;
+    const matchesType = taskType === 'all' || t.type === taskType;
+    const matchesLanguage = language === 'all' || t.languages.includes(language);
+    return matchesTab && matchesType && matchesLanguage;
   });
 
   return (
@@ -111,7 +187,15 @@ export function TaskHall() {
 
       {/* Filter */}
       <div className="bg-white px-4 py-2.5 border-b border-gray-100">
-        <FilterRow />
+        <TaskFilters
+          taskType={taskType}
+          language={language}
+          onTaskTypeChange={(nextTaskType) => {
+            setTaskType(nextTaskType);
+            setLanguage('all');
+          }}
+          onLanguageChange={setLanguage}
+        />
       </div>
 
       {activeTab > 0 && activeTab < 3 && (

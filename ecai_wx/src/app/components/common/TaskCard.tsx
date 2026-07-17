@@ -42,7 +42,7 @@ interface TaskCardProps {
 
 export function TaskCard({ task }: TaskCardProps) {
   const { navigate } = useApp();
-  const usageRate = Math.round(((task.totalSlots - task.remainingSlots) / task.totalSlots) * 100);
+  const recruitmentRate = Math.round(((task.totalSlots - task.remainingSlots) / task.totalSlots) * 100);
 
   return (
     <div
@@ -90,11 +90,11 @@ export function TaskCard({ task }: TaskCardProps) {
         <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
           <div
             className="h-full rounded-full transition-all"
-            style={{ width: `${usageRate}%`, background: '#3DBFA0' }}
+            style={{ width: `${recruitmentRate}%`, background: '#3DBFA0' }}
           />
         </div>
         <div className="flex justify-between text-xs text-gray-400 mt-0.5">
-          <span>已完成 {usageRate}%</span>
+          <span>招募进度 {recruitmentRate}%</span>
           <span>约{task.estimatedMinutes}分钟</span>
         </div>
       </div>

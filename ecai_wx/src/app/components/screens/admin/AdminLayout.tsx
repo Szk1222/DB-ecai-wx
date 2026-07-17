@@ -11,16 +11,20 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   BellOutlined,
+  FileTextOutlined,
+  RobotOutlined,
 } from '@ant-design/icons';
 import { AdminDashboard } from './AdminDashboard';
 import { AdminTasks } from './AdminTasks';
 import { AdminQC } from './AdminQC';
 import { AdminUsers } from './AdminUsers';
 import { AdminSettle } from './AdminSettle';
+import { AdminTemplates } from './AdminTemplates';
+import { AdminModels } from './AdminModels';
 
 const { Sider, Header, Content } = Layout;
 
-type AdminPage = 'dashboard' | 'tasks' | 'qc' | 'users' | 'settle';
+type AdminPage = 'dashboard' | 'tasks' | 'qc' | 'users' | 'settle' | 'templates' | 'models';
 
 const MENU_ITEMS = [
   { key: 'dashboard', icon: <DashboardOutlined />, label: '运营看板' },
@@ -28,6 +32,8 @@ const MENU_ITEMS = [
   { key: 'qc', icon: <AuditOutlined />, label: '质检工作台', badge: 3 },
   { key: 'users', icon: <TeamOutlined />, label: '用户管理' },
   { key: 'settle', icon: <AccountBookOutlined />, label: '结算中心' },
+  { key: 'templates', icon: <FileTextOutlined />, label: '模板配置' },
+  { key: 'models', icon: <RobotOutlined />, label: '模型配置' },
 ];
 
 const PAGE_TITLES: Record<AdminPage, string> = {
@@ -36,6 +42,8 @@ const PAGE_TITLES: Record<AdminPage, string> = {
   qc: '质检工作台',
   users: '用户管理',
   settle: '结算中心',
+  templates: '模板配置',
+  models: '模型配置',
 };
 
 export function AdminLayout({ onExit }: { onExit: () => void }) {
@@ -49,6 +57,8 @@ export function AdminLayout({ onExit }: { onExit: () => void }) {
       case 'qc': return <AdminQC />;
       case 'users': return <AdminUsers />;
       case 'settle': return <AdminSettle />;
+      case 'templates': return <AdminTemplates />;
+      case 'models': return <AdminModels />;
     }
   };
 
