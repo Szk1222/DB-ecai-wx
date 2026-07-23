@@ -12,6 +12,8 @@ import { ReviewProgress } from './components/screens/user/ReviewProgress';
 import { MyProfile } from './components/screens/user/MyProfile';
 import { EditProfile } from './components/screens/user/EditProfile';
 import { AuthorizationCenter } from './components/screens/user/AuthorizationCenter';
+import { AuthorizationAgreementPage } from './components/screens/user/AuthorizationAgreementPage';
+import { AuthorizationSignaturePage } from './components/screens/user/AuthorizationSignaturePage';
 import { PointsCenter } from './components/screens/user/PointsCenter';
 import { WithdrawPage } from './components/screens/user/WithdrawPage';
 import { InvitePage } from './components/screens/user/InvitePage';
@@ -33,6 +35,8 @@ function UserApp() {
     case 'my-profile':    return <MyProfile />;
     case 'edit-profile':  return <EditProfile />;
     case 'authorization-center': return <AuthorizationCenter />;
+    case 'authorization-agreement': return <AuthorizationAgreementPage />;
+    case 'authorization-signature': return <AuthorizationSignaturePage />;
     case 'points-center': return <PointsCenter />;
     case 'withdraw':      return <WithdrawPage />;
     case 'invite':        return <InvitePage />;
@@ -41,21 +45,21 @@ function UserApp() {
   }
 }
 
-export default function App() {
+function AppFrame() {
   const [showAdmin, setShowAdmin] = useState(false);
+  const { currentScreen } = useApp();
 
   if (showAdmin) {
     return <AdminLayout onExit={() => setShowAdmin(false)} />;
   }
 
   return (
-    <AppProvider>
-      <div className="relative">
-        <MobileShell>
-          <UserApp />
-        </MobileShell>
+    <div className="relative">
+      <MobileShell>
+        <UserApp />
+      </MobileShell>
 
-        {/* Admin entry button */}
+      {currentScreen !== 'authorization-signature' && (
         <button
           onClick={() => setShowAdmin(true)}
           className="fixed bottom-6 right-6 flex items-center gap-2 px-4 py-2.5 rounded-full text-white text-sm font-semibold shadow-lg hover:shadow-xl transition-all active:scale-95"
@@ -69,7 +73,11 @@ export default function App() {
           </svg>
           运营后台
         </button>
-      </div>
-    </AppProvider>
+      )}
+    </div>
   );
+}
+
+export default function App() {
+  return <AppProvider><AppFrame /></AppProvider>;
 }

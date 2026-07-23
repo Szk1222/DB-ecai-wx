@@ -5,7 +5,7 @@ const CERTS = [
   { id: 'c1', name: '大模型基础测评', icon: '🤖', desc: '完成大模型能力基础测试，获得平台认证资质', status: 'passed', date: '2026-05-12', unlocks: '文本高阶任务' },
   { id: 'c2', name: '普通话水平认证', icon: '🎙️', desc: '普通话发音标准性认证，提升语音任务匹配权重', status: 'passed', date: '2026-04-20', unlocks: '普通话专项任务' },
   { id: 'c3', name: '粤语认证', icon: '🌏', desc: '粤语母语者专属认证，解锁方言采集高薪任务', status: 'locked', date: '', unlocks: '粤语定向任务' },
-  { id: 'c4', name: '数据标注专项认证', icon: '🏷️', desc: '图像与文本标注专业能力认证', status: 'available', date: '', unlocks: '标注专项任务' },
+  { id: 'c4', name: '数据采集专项认证', icon: '🏷️', desc: '图像与文本采集专业能力认证', status: 'available', date: '', unlocks: '采集专项任务' },
 ];
 
 const BADGES = [

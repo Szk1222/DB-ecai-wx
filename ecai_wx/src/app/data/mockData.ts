@@ -94,8 +94,19 @@ export interface QCRecord {
   modelPassed: boolean;
   qcStatus: 'pending' | 'passed' | 'rework' | 'rejected';
   duration?: number;
+  voiceSamples?: VoiceSample[];
   content?: string;
   imageCount?: number;
+}
+
+export interface VoiceSample {
+  id: string;
+  text: string;
+  duration: number;
+  machineStatus: 'passed' | 'warning' | 'failed';
+  machineScore: number;
+  authorized: boolean;
+  authorizationLabel: string;
 }
 
 export interface AdminUser {
@@ -132,12 +143,17 @@ export interface AuthorizationRecord {
   organizationShortName: string;
   project: string;
   purpose: string;
-  status: 'active' | 'expired' | 'revoked';
+  status: 'pending' | 'active' | 'expired' | 'revoked';
   authorizedBy: string;
   authorizerRelation: string;
   authorizedAt: string;
   expiresAt: string;
   authorizationMethod: string;
+  projectId?: string;
+  version?: string;
+  agreementFileName?: string;
+  agreementUrl?: string;
+  requiresSignature?: boolean;
   scopes: Array<{
     name: string;
     detail: string;
@@ -189,10 +205,10 @@ export const TASKS: Task[] = [
   },
   {
     id: 't002',
-    title: '图片场景标注（室内场景）',
+    title: '室内场景图片采集',
     type: 'image',
     category: '图片采集',
-    description: '拍摄您所在室内环境的照片，并标注图片中的主要物品类别。要求光线充足，画面清晰。',
+    description: '拍摄您所在室内环境的照片，并选择图片中的主要物品类别。要求光线充足，画面清晰。',
     reward: 80,
     totalSlots: 1000,
     remainingSlots: 672,
@@ -200,10 +216,10 @@ export const TASKS: Task[] = [
     languages: ['中文'],
     requirements: ['室内环境', '光线充足', '无人脸'],
     certRequired: false,
-    verifyRules: ['分辨率 ≥ 1080p', '无模糊', '标注完整'],
+    verifyRules: ['分辨率 ≥ 1080p', '无模糊', '物品类别完整'],
     sampleCount: 10,
     estimatedMinutes: 10,
-    tags: ['图片', '标注', '新手友好'],
+    tags: ['图片', '采集', '新手友好'],
     status: 'active',
     isRecommended: true,
     isDirected: false,
@@ -274,10 +290,10 @@ export const TASKS: Task[] = [
   },
   {
     id: 't005',
-    title: '情感标注（电商评论）',
+    title: '电商评论情感采集',
     type: 'text',
     category: '文本采集',
-    description: '对给定的电商评论文本进行情感极性标注（正向/负向/中性），并给出简短理由。',
+    description: '阅读给定的电商评论文本，选择情感倾向（正向/负向/中性），并给出简短理由。',
     reward: 60,
     totalSlots: 2000,
     remainingSlots: 1543,
@@ -285,10 +301,10 @@ export const TASKS: Task[] = [
     languages: ['中文'],
     requirements: [],
     certRequired: false,
-    verifyRules: ['标注准确率 > 90%', '理由 10-30 字'],
+    verifyRules: ['情感判断准确率 > 90%', '理由 10-30 字'],
     sampleCount: 30,
     estimatedMinutes: 12,
-    tags: ['文本', '标注', '新手友好'],
+    tags: ['文本', '采集', '新手友好'],
     status: 'active',
     isRecommended: true,
     isDirected: false,
@@ -351,8 +367,8 @@ export const USER_TASKS: UserTask[] = [
 ];
 
 export const POINT_TRANSACTIONS: PointTransaction[] = [
-  { id: 'p001', type: 'earn', amount: 60, description: '任务「情感标注」通过奖励', status: 'available', createdAt: '2026-07-12 14:30' },
-  { id: 'p002', type: 'freeze', amount: 80, description: '任务「图片场景标注」待审冻结', status: 'frozen', createdAt: '2026-07-14 09:15' },
+  { id: 'p001', type: 'earn', amount: 60, description: '任务「电商评论情感采集」通过奖励', status: 'available', createdAt: '2026-07-12 14:30' },
+  { id: 'p002', type: 'freeze', amount: 80, description: '任务「室内场景图片采集」待审冻结', status: 'frozen', createdAt: '2026-07-14 09:15' },
   { id: 'p003', type: 'invite', amount: 50, description: '邀请好友「小明」完成首单奖励', status: 'available', createdAt: '2026-07-11 18:00' },
   { id: 'p004', type: 'earn', amount: 150, description: '任务「普通话朗读」通过奖励', status: 'available', createdAt: '2026-07-08 11:20' },
   { id: 'p005', type: 'redeem', amount: -200, description: '积分兑换现金 ¥2.00', status: 'redeemed', createdAt: '2026-07-05 16:45' },
@@ -365,26 +381,44 @@ export const POINT_TRANSACTIONS: PointTransaction[] = [
 
 export const INVITE_RECORDS: InviteRecord[] = [
   { id: 'i001', avatarUrl: '', nickname: '语言达人小明', joinedAt: '2026-07-11', firstTaskPassed: true, rewardPoints: 50 },
-  { id: 'i002', avatarUrl: '', nickname: '标注小红', joinedAt: '2026-06-28', firstTaskPassed: true, rewardPoints: 50 },
+  { id: 'i002', avatarUrl: '', nickname: '采集小红', joinedAt: '2026-06-28', firstTaskPassed: true, rewardPoints: 50 },
   { id: 'i003', avatarUrl: '', nickname: '数据采集爱好者', joinedAt: '2026-07-01', firstTaskPassed: false, rewardPoints: 0 },
   { id: 'i004', avatarUrl: '', nickname: '小王同学', joinedAt: '2026-07-13', firstTaskPassed: false, rewardPoints: 0 },
   { id: 'i005', avatarUrl: '', nickname: '方言达人阿龙', joinedAt: '2026-06-15', firstTaskPassed: true, rewardPoints: 50 },
 ];
 
 export const QC_RECORDS: QCRecord[] = [
-  { id: 'q001', taskId: 't001', taskTitle: '普通话朗读采集', userId: 'u001', userNickname: '用户A', type: 'voice', submittedAt: '2026-07-15 10:30', modelScore: 92, modelPassed: true, qcStatus: 'pending', duration: 8 },
+  {
+    id: 'q001', taskId: 't001', taskTitle: '普通话朗读采集', userId: 'u001', userNickname: '用户A', type: 'voice', submittedAt: '2026-07-15 10:30', modelScore: 92, modelPassed: true, qcStatus: 'pending', duration: 26,
+    voiceSamples: [
+      { id: 'q001-v01', text: '清晨的阳光穿过窗帘，房间里渐渐明亮起来。', duration: 8, machineStatus: 'passed', machineScore: 96, authorized: true, authorizationLabel: '已签署数据使用授权' },
+      { id: 'q001-v02', text: '科技正在改变我们的生活，也带来了更多新的可能。', duration: 11, machineStatus: 'warning', machineScore: 82, authorized: true, authorizationLabel: '已签署数据使用授权' },
+      { id: 'q001-v03', text: '欢迎参与本次普通话语音采集任务，请保持自然语速。', duration: 7, machineStatus: 'passed', machineScore: 94, authorized: true, authorizationLabel: '已签署数据使用授权' },
+    ],
+  },
   { id: 'q002', taskId: 't003', taskTitle: '多轮对话文本转写', userId: 'u002', userNickname: '用户B', type: 'text', submittedAt: '2026-07-15 09:15', modelScore: 75, modelPassed: false, qcStatus: 'pending', content: '客服：您好，请问有什么可以帮助您？\n用户：我买的商品还没到货...' },
-  { id: 'q003', taskId: 't002', taskTitle: '图片场景标注', userId: 'u003', userNickname: '用户C', type: 'image', submittedAt: '2026-07-15 08:00', modelScore: 88, modelPassed: true, qcStatus: 'pending', imageCount: 10 },
-  { id: 'q004', taskId: 't004', taskTitle: '方言采集（粤语）', userId: 'u004', userNickname: '用户D', type: 'voice', submittedAt: '2026-07-14 16:45', modelScore: 95, modelPassed: true, qcStatus: 'passed', duration: 12 },
-  { id: 'q005', taskId: 't005', taskTitle: '情感标注（电商评论）', userId: 'u005', userNickname: '用户E', type: 'text', submittedAt: '2026-07-14 14:30', modelScore: 60, modelPassed: false, qcStatus: 'rework', content: '正向：这个商品质量不错，快递很快\n负向：包装有点破损，但产品本身还行' },
-  { id: 'q006', taskId: 't001', taskTitle: '普通话朗读采集', userId: 'u006', userNickname: '用户F', type: 'voice', submittedAt: '2026-07-14 11:00', modelScore: 45, modelPassed: false, qcStatus: 'rejected', duration: 3 },
+  { id: 'q003', taskId: 't002', taskTitle: '室内场景图片采集', userId: 'u003', userNickname: '用户C', type: 'image', submittedAt: '2026-07-15 08:00', modelScore: 88, modelPassed: true, qcStatus: 'pending', imageCount: 10 },
+  {
+    id: 'q004', taskId: 't004', taskTitle: '方言采集（粤语）', userId: 'u004', userNickname: '用户D', type: 'voice', submittedAt: '2026-07-14 16:45', modelScore: 95, modelPassed: true, qcStatus: 'passed', duration: 19,
+    voiceSamples: [
+      { id: 'q004-v01', text: '今日天气几好，好适合出去行下。', duration: 9, machineStatus: 'passed', machineScore: 97, authorized: true, authorizationLabel: '粤语项目专项授权已生效' },
+      { id: 'q004-v02', text: '多谢你参与今次嘅语音采集任务。', duration: 10, machineStatus: 'passed', machineScore: 93, authorized: true, authorizationLabel: '粤语项目专项授权已生效' },
+    ],
+  },
+  { id: 'q005', taskId: 't005', taskTitle: '电商评论情感采集', userId: 'u005', userNickname: '用户E', type: 'text', submittedAt: '2026-07-14 14:30', modelScore: 60, modelPassed: false, qcStatus: 'rework', content: '正向：这个商品质量不错，快递很快\n负向：包装有点破损，但产品本身还行' },
+  {
+    id: 'q006', taskId: 't001', taskTitle: '普通话朗读采集', userId: 'u006', userNickname: '用户F', type: 'voice', submittedAt: '2026-07-14 11:00', modelScore: 45, modelPassed: false, qcStatus: 'rejected', duration: 6,
+    voiceSamples: [
+      { id: 'q006-v01', text: '请在安静环境中完整朗读屏幕上的文字。', duration: 6, machineStatus: 'failed', machineScore: 45, authorized: false, authorizationLabel: '授权记录缺失，禁止入库使用' },
+    ],
+  },
   { id: 'q007', taskId: 't003', taskTitle: '多轮对话文本转写', userId: 'u007', userNickname: '用户G', type: 'text', submittedAt: '2026-07-14 09:30', modelScore: 82, modelPassed: true, qcStatus: 'passed', content: '客服：感谢您的来电，请问有什么需要帮助的？' },
-  { id: 'q008', taskId: 't002', taskTitle: '图片场景标注', userId: 'u008', userNickname: '用户H', type: 'image', submittedAt: '2026-07-14 08:15', modelScore: 91, modelPassed: true, qcStatus: 'passed', imageCount: 10 },
+  { id: 'q008', taskId: 't002', taskTitle: '室内场景图片采集', userId: 'u008', userNickname: '用户H', type: 'image', submittedAt: '2026-07-14 08:15', modelScore: 91, modelPassed: true, qcStatus: 'passed', imageCount: 10 },
 ];
 
 export const ADMIN_USERS: AdminUser[] = [
   { id: 'u001', nickname: '语言达人小明', phone: '138****0001', language: '普通话', tags: ['认证用户', '语音达人'], level: 4, points: 1580, totalEarned: 3200, taskCount: 45, passRate: 96, joinedAt: '2026-03-15', verified: true, status: 'active' },
-  { id: 'u002', nickname: '标注小红', phone: '139****0002', language: '普通话', tags: ['文本标注'], level: 3, points: 860, totalEarned: 1800, taskCount: 28, passRate: 92, joinedAt: '2026-04-20', verified: true, status: 'active' },
+  { id: 'u002', nickname: '采集小红', phone: '139****0002', language: '普通话', tags: ['文本采集'], level: 3, points: 860, totalEarned: 1800, taskCount: 28, passRate: 92, joinedAt: '2026-04-20', verified: true, status: 'active' },
   { id: 'u003', nickname: '数据采集爱好者', phone: '137****0003', language: '普通话/粤语', tags: ['粤语认证', '方言达人'], level: 5, points: 2340, totalEarned: 5600, taskCount: 89, passRate: 98, joinedAt: '2026-01-10', verified: true, status: 'active' },
   { id: 'u004', nickname: '小王同学', phone: '136****0004', language: '普通话', tags: [], level: 1, points: 60, totalEarned: 60, taskCount: 2, passRate: 80, joinedAt: '2026-07-13', verified: false, status: 'active' },
   { id: 'u005', nickname: '方言达人阿龙', phone: '135****0005', language: '粤语/闽南语', tags: ['粤语认证', '闽南语认证'], level: 5, points: 3100, totalEarned: 7800, taskCount: 120, passRate: 99, joinedAt: '2025-11-05', verified: true, status: 'active' },
@@ -395,7 +429,7 @@ export const WITHDRAW_RECORDS: WithdrawRecord[] = [
   { id: 'w001', userId: 'u001', userNickname: '语言达人小明', amount: 1000, fee: 67, netAmount: 933, status: 'pending_review', appliedAt: '2026-07-15 09:00' },
   { id: 'w002', userId: 'u003', userNickname: '数据采集爱好者', amount: 2000, fee: 135, netAmount: 1865, status: 'processing', appliedAt: '2026-07-14 16:30', processedAt: '2026-07-15 10:00' },
   { id: 'w003', userId: 'u005', userNickname: '方言达人阿龙', amount: 3000, fee: 202, netAmount: 2798, status: 'paid', appliedAt: '2026-07-10 11:00', processedAt: '2026-07-12 14:00' },
-  { id: 'w004', userId: 'u002', userNickname: '标注小红', amount: 500, fee: 33, netAmount: 467, status: 'paid', appliedAt: '2026-07-05 15:00', processedAt: '2026-07-07 09:00' },
+  { id: 'w004', userId: 'u002', userNickname: '采集小红', amount: 500, fee: 33, netAmount: 467, status: 'paid', appliedAt: '2026-07-05 15:00', processedAt: '2026-07-07 09:00' },
   { id: 'w005', userId: 'u001', userNickname: '语言达人小明', amount: 800, fee: 54, netAmount: 746, status: 'failed', appliedAt: '2026-07-01 10:00', processedAt: '2026-07-03 10:00' },
   { id: 'w006', userId: 'u003', userNickname: '数据采集爱好者', amount: 1500, fee: 101, netAmount: 1399, status: 'paid', appliedAt: '2026-06-25 14:00', processedAt: '2026-06-27 11:00' },
 ];
@@ -470,6 +504,29 @@ export const USER_PROFILE = {
 
 export const AUTHORIZATION_RECORDS: AuthorizationRecord[] = [
   {
+    id: 'auth-sign-001',
+    projectId: 'prj-001',
+    organization: '标贝（北京）科技有限公司',
+    organizationShortName: '标贝科技',
+    project: '普通话语音采集项目 · 补充授权',
+    purpose: '用于语音识别模型训练、数据质量评估与项目验收',
+    status: 'pending',
+    authorizedBy: '待签署',
+    authorizerRelation: '本人授权',
+    authorizedAt: '-',
+    expiresAt: '签署后 365 天',
+    authorizationMethod: '短信确认 + 签名授权',
+    version: 'v2.2',
+    agreementFileName: '普通话语音采集项目_数据使用授权协议_v2.2.pdf',
+    agreementUrl: '/agreements/authorization-agreement.pdf',
+    requiresSignature: true,
+    scopes: [
+      { name: '基础身份信息', detail: '昵称、年龄区间、所在地区' },
+      { name: '语音样本', detail: '本项目内提交的普通话朗读与自然对话录音' },
+      { name: '设备信息', detail: '设备型号、系统版本、网络类型' },
+    ],
+  },
+  {
     id: 'auth001',
     organization: '标贝（北京）科技有限公司',
     organizationShortName: '标贝科技',
@@ -481,6 +538,10 @@ export const AUTHORIZATION_RECORDS: AuthorizationRecord[] = [
     authorizedAt: '2026-07-08 10:32',
     expiresAt: '2027-07-08',
     authorizationMethod: '人脸核验 + 短信确认',
+    projectId: 'prj-001',
+    version: 'v2.1',
+    agreementFileName: '普通话语音采集项目_已签署授权协议_v2.1.pdf',
+    agreementUrl: '/agreements/signed-authorization-agreement.pdf',
     scopes: [
       { name: '基础身份信息', detail: '昵称、年龄区间、所在地区' },
       { name: '语音样本', detail: '本项目内提交的 20 条普通话录音' },
@@ -491,7 +552,7 @@ export const AUTHORIZATION_RECORDS: AuthorizationRecord[] = [
     id: 'auth002',
     organization: '灵犀智能研究院',
     organizationShortName: '灵犀研究院',
-    project: '中文情感标注研究',
+    project: '中文情感语料采集研究',
     purpose: '用于非商业学术研究及数据质量复核',
     status: 'active',
     authorizedBy: '张 *',
@@ -499,8 +560,11 @@ export const AUTHORIZATION_RECORDS: AuthorizationRecord[] = [
     authorizedAt: '2026-06-21 16:08',
     expiresAt: '2026-12-31',
     authorizationMethod: '短信验证码确认',
+    version: 'v1.3',
+    agreementFileName: '中文情感语料采集研究_已签署授权协议_v1.3.pdf',
+    agreementUrl: '/agreements/signed-authorization-agreement.pdf',
     scopes: [
-      { name: '任务结果', detail: '情感标签与标注理由' },
+      { name: '任务结果', detail: '情感倾向与判断理由' },
       { name: '能力标签', detail: '语言能力、任务通过率' },
     ],
   },
@@ -516,9 +580,12 @@ export const AUTHORIZATION_RECORDS: AuthorizationRecord[] = [
     authorizedAt: '2025-05-12 09:20',
     expiresAt: '2026-05-12',
     authorizationMethod: '隐私协议勾选确认',
+    version: 'v1.0',
+    agreementFileName: '室内场景图像数据集_历史授权协议_v1.0.pdf',
+    agreementUrl: '/agreements/signed-authorization-agreement.pdf',
     scopes: [
       { name: '图像样本', detail: '该项目内提交的 10 张室内场景照片' },
-      { name: '标注结果', detail: '物体分类标签与场景标签' },
+      { name: '采集结果', detail: '物体分类标签与场景标签' },
     ],
   },
 ];

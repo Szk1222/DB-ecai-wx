@@ -32,6 +32,7 @@ import {
   SearchOutlined,
   UploadOutlined,
 } from '@ant-design/icons';
+import { ConfigCreateDrawer, CreatedConfigPayload } from './ConfigCreateDrawer';
 import './AdminConfig.css';
 
 type TemplateStatus = 'active' | 'draft' | 'disabled';
@@ -175,6 +176,7 @@ export function AdminTemplates() {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<string>();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<TemplateItem | null>(null);
   const [preview, setPreview] = useState<any>(null);
   const [form] = Form.useForm();
@@ -231,6 +233,22 @@ export function AdminTemplates() {
       updatedBy: '运营管理员',
     }, ...items]);
     message.success('已复制为新草稿');
+  };
+
+  const handleTemplateCreated = (payload: CreatedConfigPayload) => {
+    const values = payload.data as Partial<TemplateItem>;
+    setTemplates((items) => [{
+      ...DEFAULT_VALUES,
+      ...values,
+      id: payload.id,
+      name: payload.name,
+      category: payload.category,
+      version: 1,
+      status: 'draft',
+      taskCount: 0,
+      updatedAt: '刚刚',
+      updatedBy: '运营管理员',
+    } as TemplateItem, ...items]);
   };
 
   const columns = [
@@ -312,12 +330,10 @@ export function AdminTemplates() {
   return (
     <div className="admin-config-page">
       <section className="admin-config-hero">
-        <div className="admin-config-kicker">Collection Blueprint</div>
         <h2 className="admin-config-title">采集模板配置</h2>
-        <p className="admin-config-subtitle">把采集参数、执行规范与质检批注沉淀为可复用版本。已被任务引用的模板，编辑保存时自动生成新版本。</p>
         <div className="admin-config-actions">
           <Button icon={<EyeOutlined />} onClick={() => setPreview(INITIAL_TEMPLATES[0])}>查看示例</Button>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => openEditor()} style={{ background: '#30B894' }}>新建模板</Button>
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)} style={{ background: '#30B894' }}>新建模板</Button>
         </div>
       </section>
 
@@ -408,6 +424,8 @@ export function AdminTemplates() {
           </Space>
         </div>
       </Drawer>
+
+      <ConfigCreateDrawer type="template" open={createOpen} onClose={() => setCreateOpen(false)} onCreated={handleTemplateCreated} />
 
       <Modal title="模板预览" width={720} open={Boolean(preview)} onCancel={() => setPreview(null)} footer={<Button type="primary" onClick={() => setPreview(null)} style={{ background: '#30B894' }}>完成预览</Button>}>
         {preview && (

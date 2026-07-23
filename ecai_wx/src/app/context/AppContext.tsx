@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { USER_PROFILE } from '../data/mockData';
+import type { SignedAuthorizationAgreement } from '../data/authorizationAgreement';
 
 type Screen =
   | 'onboarding'
@@ -13,6 +14,8 @@ type Screen =
   | 'my-profile'
   | 'edit-profile'
   | 'authorization-center'
+  | 'authorization-agreement'
+  | 'authorization-signature'
   | 'points-center'
   | 'withdraw'
   | 'invite'
@@ -26,9 +29,12 @@ interface AppState {
   currentTab: Tab;
   selectedTaskId: string | null;
   selectedUserTaskId: string | null;
+  selectedAuthorizationId: string | null;
+  signedAgreements: Record<string, SignedAuthorizationAgreement>;
   user: typeof USER_PROFILE;
   updateProfile: (profile: Partial<typeof USER_PROFILE>) => void;
-  navigate: (screen: Screen, params?: { taskId?: string; userTaskId?: string }) => void;
+  navigate: (screen: Screen, params?: { taskId?: string; userTaskId?: string; authorizationId?: string }) => void;
+  saveSignedAgreement: (agreement: SignedAuthorizationAgreement) => void;
   setTab: (tab: Tab) => void;
   login: () => void;
   logout: () => void;
@@ -42,16 +48,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [currentTab, setCurrentTab] = useState<Tab>('tasks');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [selectedUserTaskId, setSelectedUserTaskId] = useState<string | null>(null);
+  const [selectedAuthorizationId, setSelectedAuthorizationId] = useState<string | null>(null);
+  const [signedAgreements, setSignedAgreements] = useState<Record<string, SignedAuthorizationAgreement>>({});
   const [user, setUser] = useState(USER_PROFILE);
 
   function updateProfile(profile: Partial<typeof USER_PROFILE>) {
     setUser((current) => ({ ...current, ...profile }));
   }
 
-  function navigate(screen: Screen, params?: { taskId?: string; userTaskId?: string }) {
+  function navigate(screen: Screen, params?: { taskId?: string; userTaskId?: string; authorizationId?: string }) {
     setCurrentScreen(screen);
     if (params?.taskId !== undefined) setSelectedTaskId(params.taskId);
     if (params?.userTaskId !== undefined) setSelectedUserTaskId(params.userTaskId);
+    if (params?.authorizationId !== undefined) setSelectedAuthorizationId(params.authorizationId);
+  }
+
+  function saveSignedAgreement(agreement: SignedAuthorizationAgreement) {
+    setSignedAgreements((current) => {
+      const previous = current[agreement.recordId];
+      if (previous?.pdfUrl?.startsWith('blob:')) URL.revokeObjectURL(previous.pdfUrl);
+      return { ...current, [agreement.recordId]: agreement };
+    });
   }
 
   function setTab(tab: Tab) {
@@ -78,9 +95,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         currentTab,
         selectedTaskId,
         selectedUserTaskId,
+        selectedAuthorizationId,
+        signedAgreements,
         user,
         updateProfile,
         navigate,
+        saveSignedAgreement,
         setTab,
         login,
         logout,

@@ -70,7 +70,7 @@ export function CollectImage() {
         </div>
         <h2 className="text-xl font-bold text-gray-800 mb-2">图片采集完成！</h2>
         <p className="text-sm text-gray-500 text-center mb-8">
-          已上传 {images.length} 张图片并完成标注，提交后进入审核
+          已上传 {images.length} 张图片并完成类别选择，提交后进入审核
         </p>
         <button
           className="w-full py-3.5 rounded-2xl text-white font-semibold"
@@ -164,7 +164,7 @@ export function CollectImage() {
         {selectedImg && (
           <div className="bg-white rounded-2xl p-4">
             <p className="text-sm font-medium text-gray-700 mb-2">
-              标注图中包含的物品（已选 {selectedImg.labels.length} 项）
+              选择图中包含的物品（已选 {selectedImg.labels.length} 项）
             </p>
             <div className="flex flex-wrap gap-2">
               {LABELS.map((label) => (
@@ -186,7 +186,7 @@ export function CollectImage() {
         )}
 
         {!selected && images.length > 0 && (
-          <p className="text-xs text-center text-gray-400">点击图片进行标注</p>
+          <p className="text-xs text-center text-gray-400">点击图片选择物品类别</p>
         )}
 
         {/* Submit */}

@@ -1,7 +1,17 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Table, Tag, Button, Space, Tabs, Progress, Modal, Card, Row, Col, Badge } from 'antd';
-import { CheckOutlined, CloseOutlined, RollbackOutlined, AudioOutlined, FileTextOutlined, PictureOutlined } from '@ant-design/icons';
-import { QC_RECORDS, QCRecord } from '../../../data/mockData';
+import {
+  AudioOutlined,
+  CheckOutlined,
+  CloseOutlined,
+  FileTextOutlined,
+  PictureOutlined,
+  PlayCircleFilled,
+  RollbackOutlined,
+} from '@ant-design/icons';
+import { QC_RECORDS, QCRecord, VoiceSample } from '../../../data/mockData';
+import { AudioDataDetails, AudioDataDrawer } from './AudioDataDrawer';
+import './AdminQC.css';
 
 const STATUS_COLORS: Record<string, string> = {
   pending: 'warning',
@@ -32,10 +42,119 @@ function ScoreTag({ score, passed }: { score: number; passed: boolean }) {
   );
 }
 
+const WAVE_HEIGHTS = [8, 15, 22, 11, 26, 18, 10, 24, 29, 14, 20, 8, 17, 27, 13, 23, 31, 16, 9, 25, 19, 12, 28, 16, 22, 10, 18, 26, 13, 21];
+
+function formatPlaybackTime(value: number) {
+  const seconds = Math.max(0, Math.floor(value));
+  return `00:${seconds.toString().padStart(2, '0')}`;
+}
+
+function VoiceDataPreview({ record, onPreview }: { record: QCRecord; onPreview: (sample: VoiceSample, index: number) => void }) {
+  const samples = useMemo<VoiceSample[]>(() => record.voiceSamples ?? [{
+    id: `${record.id}-voice`,
+    text: '该条录音暂未关联朗读文本。',
+    duration: record.duration ?? 0,
+    machineStatus: record.modelPassed ? 'passed' : 'failed',
+    machineScore: record.modelScore,
+    authorized: false,
+    authorizationLabel: '暂无授权记录',
+  }], [record]);
+  const totalDuration = samples.reduce((sum, sample) => sum + sample.duration, 0);
+
+  return (
+    <section className="qc-voice-preview" aria-label="语音数据预览">
+      <header className="qc-voice-preview__header">
+        <div className="qc-voice-preview__title">
+          <span className="qc-voice-preview__icon"><AudioOutlined /></span>
+          <span>语音数据预览</span>
+        </div>
+        <div className="qc-voice-preview__meta">共 {samples.length} 条 · WAV / 16kHz · 总时长 {totalDuration} 秒</div>
+      </header>
+
+      <div className="qc-voice-list">
+        {samples.map((sample, index) => {
+          return (
+            <article className="qc-voice-item" key={sample.id}>
+              <div className="qc-voice-player">
+                <Button
+                  className="qc-play-button"
+                  type="text"
+                  shape="circle"
+                  icon={<PlayCircleFilled />}
+                  aria-label={`播放并查看第 ${index + 1} 条录音`}
+                  onClick={() => onPreview(sample, index)}
+                />
+
+                <div className="qc-wave-wrap">
+                  <div className="qc-wave-row" aria-hidden="true">
+                    {WAVE_HEIGHTS.map((height, barIndex) => (
+                      <span
+                        className="qc-wave-bar"
+                        key={`${sample.id}-${barIndex}`}
+                        style={{ height: `${Math.max(4, height - ((index * 3 + barIndex) % 7))}px` }}
+                      />
+                    ))}
+                  </div>
+                  <div className="qc-time-row">
+                    <span>00:00 / {formatPlaybackTime(sample.duration)}</span>
+                    <span className="qc-sample-index">录音 {String(index + 1).padStart(2, '0')}</span>
+                  </div>
+                </div>
+
+                <div className="qc-voice-statuses">
+                  <Tag color="cyan">点击播放查看详情</Tag>
+                </div>
+              </div>
+
+              <div className="qc-transcript">
+                <span className="qc-transcript__label">录音文本</span>
+                <span className="qc-transcript__text">{sample.text}</span>
+              </div>
+              <div className="qc-transcript" style={{ marginTop: 8, paddingTop: 8 }}>
+                <span className="qc-transcript__label">授权状态</span>
+                <span className="qc-transcript__text" style={{ color: sample.authorized ? '#348D76' : '#D14343' }}>{sample.authorizationLabel}</span>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 export function AdminQC() {
   const [records, setRecords] = useState(QC_RECORDS);
   const [activeTab, setActiveTab] = useState('pending');
   const [reviewModal, setReviewModal] = useState<QCRecord | null>(null);
+  const [audioDrawerData, setAudioDrawerData] = useState<AudioDataDetails | null>(null);
+
+  function openVoiceSample(sample: VoiceSample, index: number, record: QCRecord) {
+    const machineSummary = sample.machineStatus === 'passed'
+      ? '音频完整度、清晰度与文本匹配度均符合当前机检规则。'
+      : sample.machineStatus === 'warning'
+        ? '检测到轻微环境噪声，建议质检人员结合录音文本复核。'
+        : '音频存在明显质量问题，未通过当前机检规则。';
+    setAudioDrawerData({
+      id: sample.id,
+      title: `${record.taskTitle} · 录音 ${String(index + 1).padStart(2, '0')}`,
+      transcript: sample.text,
+      duration: sample.duration,
+      format: 'WAV',
+      sampleRate: '16 kHz',
+      bitDepth: '16 bit',
+      channels: '单声道',
+      fileSize: `${Math.max(96, Math.round(sample.duration * 31.25))} KB`,
+      user: record.userNickname,
+      taskName: record.taskTitle,
+      jobId: record.id,
+      submittedAt: record.submittedAt,
+      machineStatus: sample.machineStatus,
+      machineScore: sample.machineScore,
+      machineSummary,
+      authorizationStatus: sample.authorized ? 'approved' : 'pending',
+      authorizationSummary: sample.authorizationLabel,
+    });
+  }
 
   function updateStatus(id: string, status: QCRecord['qcStatus']) {
     setRecords((prev) => prev.map((r) => r.id === id ? { ...r, qcStatus: status } : r));
@@ -195,7 +314,7 @@ export function AdminQC() {
             </Space>
           ) : null
         }
-        width={560}
+        width={780}
       >
         {reviewModal && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -220,19 +339,7 @@ export function AdminQC() {
             </Card>
 
             {reviewModal.type === 'voice' && (
-              <Card size="small" title="语音数据" style={{ borderRadius: 8 }}>
-                <div style={{ background: '#E8F7F4', borderRadius: 8, padding: '16px', textAlign: 'center' }}>
-                  <AudioOutlined style={{ fontSize: 32, color: '#3DBFA0' }} />
-                  <div style={{ marginTop: 8, color: '#6B7280', fontSize: 13 }}>
-                    时长: {reviewModal.duration}秒 | 格式: WAV 16kHz
-                  </div>
-                  <div style={{ marginTop: 8, display: 'flex', justifyContent: 'center', gap: 4 }}>
-                    {Array.from({ length: 20 }).map((_, i) => (
-                      <div key={i} style={{ width: 3, background: '#3DBFA0', borderRadius: 2, height: Math.random() * 20 + 5 }} />
-                    ))}
-                  </div>
-                </div>
-              </Card>
+              <VoiceDataPreview record={reviewModal} onPreview={(sample, index) => openVoiceSample(sample, index, reviewModal)} />
             )}
 
             {reviewModal.type === 'text' && reviewModal.content && (
@@ -257,6 +364,7 @@ export function AdminQC() {
           </div>
         )}
       </Modal>
+      <AudioDataDrawer data={audioDrawerData} open={Boolean(audioDrawerData)} onClose={() => setAudioDrawerData(null)} />
     </div>
   );
 }

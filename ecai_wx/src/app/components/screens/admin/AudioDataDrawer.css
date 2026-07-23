@@ -1,0 +1,236 @@
+.audio-detail-drawer .ant-drawer-body {
+  padding: 0 24px 28px;
+  background: #f7faf9;
+}
+
+.audio-detail-drawer .ant-drawer-header {
+  min-height: 54px;
+  border-bottom: 0;
+  background: #f7faf9;
+}
+
+.audio-detail-hero {
+  position: relative;
+  display: flex;
+  gap: 14px;
+  overflow: hidden;
+  margin: 0 -4px 16px;
+  padding: 20px;
+  border: 1px solid #dfeae6;
+  border-radius: 16px;
+  background: radial-gradient(circle at 92% 10%, rgba(79, 110, 247, 0.12), transparent 28%), linear-gradient(120deg, #ffffff, #edf8f5);
+}
+
+.audio-detail-hero::after {
+  content: '';
+  position: absolute;
+  right: 26px;
+  bottom: -48px;
+  width: 112px;
+  height: 112px;
+  border: 15px solid rgba(49, 184, 149, 0.08);
+  border-radius: 50%;
+}
+
+.audio-detail-hero__icon {
+  z-index: 1;
+  display: flex;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: #31b895;
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(49, 184, 149, 0.24);
+  font-size: 21px;
+}
+
+.audio-detail-hero__content {
+  z-index: 1;
+  min-width: 0;
+}
+
+.audio-detail-hero h2 {
+  margin: 0 0 7px;
+  color: #203449;
+  font-size: 18px;
+  font-weight: 760;
+  line-height: 1.35;
+}
+
+.audio-detail-hero__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  color: #7e8c9d;
+  font-family: 'Cascadia Code', 'SFMono-Regular', sans-serif;
+  font-size: 10px;
+}
+
+.audio-player-card {
+  padding: 18px;
+  border: 1px solid #dde8e4;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 7px 24px rgba(31, 60, 52, 0.055);
+}
+
+.audio-player-card__topline,
+.audio-player-card__controls,
+.audio-player-card__time {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.audio-player-card__label {
+  color: #2b4055;
+  font-size: 13px;
+  font-weight: 720;
+}
+
+.audio-player-card__hint {
+  margin-top: 2px;
+  color: #99a4b0;
+  font-size: 10px;
+}
+
+.audio-player-card__controls {
+  justify-content: flex-start;
+  gap: 16px;
+  margin-top: 17px;
+}
+
+.audio-player-card__play.ant-btn {
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  background: #31b895;
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(49, 184, 149, 0.26);
+  font-size: 25px;
+}
+
+.audio-player-card__play.ant-btn:hover {
+  background: #249f82 !important;
+  color: #fff !important;
+}
+
+.audio-player-card__timeline {
+  min-width: 0;
+  flex: 1;
+}
+
+.audio-waveform {
+  display: flex;
+  height: 47px;
+  align-items: center;
+  gap: 3px;
+}
+
+.audio-waveform span {
+  min-width: 2px;
+  flex: 1;
+  border-radius: 3px;
+  background: #d8e4e1;
+  transition: background 160ms ease;
+}
+
+.audio-waveform span.is-played {
+  background: linear-gradient(180deg, #55c9ad, #2eaa8b);
+}
+
+.audio-player-slider.ant-slider {
+  margin: -1px 0 2px;
+}
+
+.audio-player-slider .ant-slider-track,
+.audio-player-slider .ant-slider-handle::after {
+  background: #31b895;
+}
+
+.audio-player-card__time {
+  color: #8995a4;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.audio-detail-section {
+  margin-top: 14px;
+  padding: 16px;
+  border: 1px solid #e2e9e7;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.audio-detail-section__title,
+.audio-status-card__title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 11px;
+  color: #33495f;
+  font-size: 13px;
+  font-weight: 720;
+}
+
+.audio-transcript {
+  padding: 13px 14px;
+  border-left: 3px solid #55c7aa;
+  border-radius: 4px 10px 10px 4px;
+  background: #f1f8f6;
+  color: #394e62;
+  font-size: 13px;
+  line-height: 1.85;
+}
+
+.audio-basic-info .ant-descriptions-item-label,
+.audio-source-info .ant-descriptions-item-label {
+  color: #8a96a4;
+  font-size: 11px;
+}
+
+.audio-basic-info .ant-descriptions-item-content,
+.audio-source-info .ant-descriptions-item-content {
+  color: #34495d;
+  font-size: 12px;
+  font-weight: 620;
+}
+
+.audio-status-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.audio-status-card {
+  min-height: 130px;
+  padding: 16px;
+  border: 1px solid #e2e9e7;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.audio-status-card__progress {
+  margin-top: 10px;
+}
+
+.audio-status-card p {
+  margin: 10px 0 0;
+  color: #7c8998;
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+@media (max-width: 640px) {
+  .audio-status-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .audio-detail-drawer .ant-drawer-content-wrapper {
+    width: 100% !important;
+  }
+}

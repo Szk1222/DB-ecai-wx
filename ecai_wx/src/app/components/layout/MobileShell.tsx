@@ -7,23 +7,26 @@ interface MobileShellProps {
 }
 
 export function MobileShell({ children }: MobileShellProps) {
-  const { isLoggedIn } = useApp();
-  const showNav = isLoggedIn;
+  const { isLoggedIn, currentScreen } = useApp();
+  const isSignatureMode = currentScreen === 'authorization-signature';
+  const showNav = isLoggedIn && !isSignatureMode;
+  const shellWidth = isSignatureMode ? 844 : 390;
+  const shellHeight = isSignatureMode ? 390 : 844;
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
       <div
         className="relative bg-[#F5F6F8] overflow-hidden shadow-2xl"
         style={{
-          width: 390,
-          height: 844,
-          borderRadius: 44,
-          border: '10px solid #1a1a2e',
+          width: shellWidth,
+          height: shellHeight,
+          borderRadius: isSignatureMode ? 28 : 44,
+          border: isSignatureMode ? '8px solid #1a1a2e' : '10px solid #1a1a2e',
           boxShadow: '0 0 0 2px #3a3a5c, 0 40px 80px rgba(0,0,0,0.4)',
         }}
       >
         {/* Status bar */}
-        <div
+        {!isSignatureMode && <div
           className="flex items-center justify-between px-6 pt-3 pb-1"
           style={{ background: 'transparent', height: 44, zIndex: 10, position: 'relative' }}
         >
@@ -46,14 +49,14 @@ export function MobileShell({ children }: MobileShellProps) {
               <path d="M23 4.5V7.5C23.8 7.2 24.5 6.5 24.5 6C24.5 5.5 23.8 4.8 23 4.5Z" fill="#1a1a2e" fillOpacity="0.4"/>
             </svg>
           </div>
-        </div>
+        </div>}
 
         {/* Content area */}
         <div
           className="overflow-y-auto overflow-x-hidden"
           style={{
-            height: showNav ? 844 - 44 - 56 - 20 : 844 - 44 - 20,
-            paddingBottom: 8,
+            height: isSignatureMode ? shellHeight - 16 : showNav ? shellHeight - 44 - 56 - 20 : shellHeight - 44 - 20,
+            paddingBottom: isSignatureMode ? 0 : 8,
           }}
         >
           {children}

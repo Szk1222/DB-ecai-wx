@@ -30,6 +30,7 @@ import {
   RobotOutlined,
   SearchOutlined,
 } from '@ant-design/icons';
+import { ConfigCreateDrawer, CreatedConfigPayload } from './ConfigCreateDrawer';
 import './AdminConfig.css';
 
 type ModelStatus = 'online' | 'offline' | 'testing';
@@ -146,6 +147,7 @@ export function AdminModels() {
   const [models, setModels] = useState(INITIAL_MODELS);
   const [search, setSearch] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<ModelItem | null>(null);
   const [thresholds, setThresholds] = useState(DEFAULT_THRESHOLDS);
   const [form] = Form.useForm();
@@ -182,6 +184,19 @@ export function AdminModels() {
     }
     message.success(editing ? '模型配置已更新' : '模型服务已添加');
     setDrawerOpen(false);
+  };
+
+  const handleModelCreated = (payload: CreatedConfigPayload) => {
+    setModels((items) => [{
+      ...(payload.data as Partial<ModelItem>),
+      id: payload.id,
+      name: payload.name,
+      version: payload.version,
+      status: 'offline',
+      latency: 0,
+      successRate: 0,
+      updatedAt: '刚刚',
+    } as ModelItem, ...items]);
   };
 
   const testConnection = (model: ModelItem) => {
@@ -289,12 +304,10 @@ export function AdminModels() {
   return (
     <div className="admin-config-page">
       <section className="admin-config-hero">
-        <div className="admin-config-kicker">Model Operations</div>
         <h2 className="admin-config-title">模型配置中心</h2>
-        <p className="admin-config-subtitle">统一管理质检模型的服务地址、鉴权、检测能力与判定阈值。连接测试仅用于原型演示，不会向外部服务发送数据。</p>
         <div className="admin-config-actions">
           <Button icon={<ReloadOutlined />} onClick={() => models.filter((model) => model.status === 'online').forEach(testConnection)}>批量健康检查</Button>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => openEditor()} style={{ background: '#30B894' }}>接入模型</Button>
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)} style={{ background: '#30B894' }}>接入模型</Button>
         </div>
       </section>
 
@@ -354,6 +367,7 @@ export function AdminModels() {
           </Space>
         </div>
       </Drawer>
+      <ConfigCreateDrawer type="model" open={createOpen} onClose={() => setCreateOpen(false)} onCreated={handleModelCreated} />
     </div>
   );
 }

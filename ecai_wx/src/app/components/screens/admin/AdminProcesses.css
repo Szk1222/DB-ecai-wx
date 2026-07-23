@@ -1,0 +1,237 @@
+.process-config-page .admin-config-panel .ant-card-body {
+  padding-top: 14px;
+}
+
+.process-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.process-name-icon {
+  display: flex;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 11px;
+  background: #eaf8f4;
+  color: #299e81;
+  font-size: 16px;
+}
+
+.process-name-cell button {
+  overflow: hidden;
+  max-width: 184px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #273a4f;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.process-name-cell button:hover { color: #279e81; }
+.process-name-cell > div > div,
+.process-table-meta { margin-top: 2px; color: #98a4b2; font-size: 10px; }
+.process-template-name { color: #405368; font-size: 12px; font-weight: 620; }
+
+.process-mini-flow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.process-mini-flow span {
+  display: flex;
+  width: 25px;
+  height: 25px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--step-color) 24%, white);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--step-color) 9%, white);
+  color: var(--step-color);
+}
+
+.process-mini-flow i { color: #b3bec8; font-size: 15px; font-style: normal; }
+
+.process-editor {
+  --process-ink: #22364b;
+  --process-muted: #8190a0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  color: var(--process-ink);
+}
+
+.process-editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border: 1px solid #e4ebe9;
+  border-radius: 14px;
+  background: linear-gradient(112deg, #fff, #f5faf8);
+  box-shadow: 0 6px 20px rgba(32, 50, 71, .045);
+}
+
+.process-editor-header > div:first-child > .ant-btn { margin: -6px 0 4px -10px; color: #718096; }
+.process-editor-heading { display: flex; align-items: center; gap: 9px; }
+.process-editor-heading h2 { margin: 0; color: #22364b; font-size: 20px; font-weight: 760; }
+
+.process-basic-card.ant-card {
+  border-color: #e4eaed;
+  border-radius: 14px;
+  box-shadow: 0 5px 18px rgba(32, 50, 71, .04);
+}
+
+.process-basic-card .ant-card-head { min-height: 46px; }
+.process-basic-card .ant-card-head-title { font-size: 13px; font-weight: 720; }
+.process-basic-card .ant-card-body { padding: 16px 18px 2px; }
+
+.process-workbench {
+  display: grid;
+  grid-template-columns: 220px minmax(390px, 1fr) 300px;
+  min-height: 590px;
+  overflow: hidden;
+  border: 1px solid #e2e9eb;
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: 0 7px 25px rgba(32, 50, 71, .05);
+}
+
+.process-step-library,
+.process-step-settings {
+  padding: 18px;
+  background: #f8fafb;
+}
+
+.process-step-library { border-right: 1px solid #e6ecef; }
+.process-step-settings { border-left: 1px solid #e6ecef; }
+.process-panel-title { display: flex; align-items: center; gap: 7px; color: #2d4358; font-size: 13px; font-weight: 740; }
+.process-step-library > p,
+.process-canvas-header p { margin: 5px 0 14px; color: #98a3b0; font-size: 10px; line-height: 1.55; }
+
+.process-library-list { display: flex; flex-direction: column; gap: 8px; }
+.process-library-list button {
+  display: grid;
+  grid-template-columns: 30px 1fr 16px;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 11px;
+  border: 1px solid #e1e9e7;
+  border-radius: 11px;
+  background: #fff;
+  color: #657488;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.process-library-list button:hover { border-color: #76cbb5; box-shadow: 0 6px 15px rgba(49, 184, 149, .08); transform: translateY(-1px); }
+.process-library-list button > span:first-child { font-size: 17px; }
+.process-library-list b { display: block; color: #364a5f; font-size: 12px; }
+.process-library-list small { display: block; margin-top: 2px; color: #9ba6b3; font-size: 9px; }
+.process-library-empty { padding: 22px 8px; border: 1px dashed #d9e3e0; border-radius: 11px; color: #98a4b1; font-size: 11px; text-align: center; }
+
+.process-rule-note {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 18px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #edf7f4;
+  color: #6b7d8e;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.process-rule-note b { color: #388d77; font-size: 11px; }
+.process-canvas { padding: 18px 24px 28px; background: radial-gradient(circle at 50% 12%, rgba(49, 184, 149, .055), transparent 36%), #fff; }
+.process-canvas-header { display: flex; align-items: flex-start; justify-content: space-between; }
+.process-step-sequence { display: flex; max-width: 640px; flex-direction: column; gap: 12px; margin: 8px auto 0; }
+
+.process-step-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 38px 42px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 11px;
+  min-height: 68px;
+  padding: 10px 14px;
+  border: 1px solid #e2e9e7;
+  border-radius: 13px;
+  background: #fff;
+  cursor: pointer;
+  box-shadow: 0 5px 15px rgba(31, 56, 49, .035);
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.process-step-card:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  bottom: -13px;
+  left: 71px;
+  width: 2px;
+  height: 13px;
+  background: #bfded5;
+}
+
+.process-step-card:hover { border-color: #97d5c5; transform: translateY(-1px); }
+.process-step-card.is-selected { border-color: #31b895; box-shadow: 0 0 0 3px rgba(49, 184, 149, .1), 0 8px 20px rgba(31, 77, 65, .07); }
+.process-step-card.is-disabled { background: #f6f8f9; opacity: .64; }
+.process-step-card.has-error { border-color: #ec756e; box-shadow: 0 0 0 3px rgba(236, 117, 110, .09); }
+.process-step-index { color: #a2adb9; font-family: 'Cascadia Code', monospace; font-size: 10px; }
+.process-step-icon { display: flex; width: 38px; height: 38px; align-items: center; justify-content: center; border-radius: 11px; font-size: 17px; }
+.process-step-copy { min-width: 0; }
+.process-step-copy b { display: block; overflow: hidden; color: #2d4257; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.process-step-copy span { display: block; margin-top: 3px; color: #8e9aa8; font-size: 10px; }
+.process-drag-handle { padding: 7px; color: #9aa6b2; cursor: grab; font-size: 16px; }
+
+.process-settings-heading { display: flex; align-items: center; gap: 10px; margin: 16px 0; padding: 12px; border: 1px solid #e2eae7; border-radius: 11px; background: #fff; }
+.process-settings-heading b { display: block; color: #34495e; font-size: 13px; }
+.process-settings-heading span:not(.process-step-icon) { display: block; margin-top: 2px; color: #98a4b1; font-size: 10px; }
+.process-settings-form { display: flex; flex-direction: column; gap: 14px; }
+.process-settings-form label { display: flex; min-width: 0; flex-direction: column; gap: 6px; color: #68778a; font-size: 11px; }
+.process-settings-form label > span:first-child { font-weight: 650; }
+.process-settings-form .has-error > span:first-child { color: #dc5f58; }
+.process-settings-form .ant-input-number { width: 100%; }
+.process-number-field { display: flex; width: 100%; }
+.process-number-field .ant-input-number { border-radius: 6px 0 0 6px; }
+.process-number-field > span {
+  display: flex;
+  min-width: 38px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d9d9d9;
+  border-left: 0;
+  border-radius: 0 6px 6px 0;
+  background: #fafafa;
+  color: #7d8997;
+  font-size: 11px;
+}
+.process-switch-row { display: flex; align-items: center; gap: 9px; }
+.process-switch-row small { color: #8d99a7; font-size: 10px; }
+.process-step-settings > .ant-btn { margin-top: 18px; padding-left: 0; }
+
+@media (max-width: 1180px) {
+  .process-workbench { grid-template-columns: 190px minmax(360px, 1fr) 270px; }
+}
+
+@media (max-width: 900px) {
+  .process-workbench { grid-template-columns: 1fr; }
+  .process-step-library,
+  .process-step-settings { border: 0; }
+  .process-step-library { border-bottom: 1px solid #e6ecef; }
+  .process-step-settings { border-top: 1px solid #e6ecef; }
+  .process-library-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .process-editor-header { align-items: flex-start; gap: 12px; }
+}

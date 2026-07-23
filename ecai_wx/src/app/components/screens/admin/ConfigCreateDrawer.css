@@ -1,0 +1,39 @@
+.shared-config-drawer .ant-drawer-body { padding: 0; background: #f7f9fb; }
+.shared-config-drawer .ant-drawer-header { padding: 17px 22px; border-bottom-color: #e8edf0; }
+.shared-config-title { display: flex; align-items: center; gap: 11px; }
+.shared-config-title > span { display: flex; width: 38px; height: 38px; align-items: center; justify-content: center; border-radius: 11px; font-size: 17px; }
+.shared-config-title b { display: block; color: #263a50; font-size: 15px; }
+.shared-config-title .ant-tag { margin-top: 4px; font-size: 10px; font-weight: 500; }
+.shared-config-body { padding: 18px 22px 88px; }
+.shared-config-section { margin-bottom: 14px; padding: 17px; border: 1px solid #e5ebef; border-radius: 13px; background: #fff; }
+.shared-config-section__title { display: flex; align-items: center; gap: 8px; margin-bottom: 15px; color: #30455a; font-size: 13px; font-weight: 720; }
+.shared-config-section__title > span { display: inline-flex; width: 23px; height: 23px; align-items: center; justify-content: center; border-radius: 7px; background: #eaf8f4; color: #299e81; font-size: 9px; font-weight: 800; }
+.shared-config-section .ant-form-item { margin-bottom: 15px; }
+.shared-auth-notice { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 14px; padding: 13px 15px; border: 1px solid #cfece4; border-radius: 12px; background: linear-gradient(135deg, #effaf7, #f8fcfb); color: #299e81; }
+.shared-auth-notice > span { margin-top: 2px; font-size: 17px; }
+.shared-auth-notice b { display: block; color: #2d6155; font-size: 12px; }
+.shared-auth-notice div > span { display: block; margin-top: 3px; color: #729087; font-size: 11px; line-height: 1.55; }
+.shared-auth-scopes { display: flex; flex-direction: column; gap: 9px; margin-bottom: 10px; }
+.shared-auth-scope { display: grid; grid-template-columns: 28px minmax(0, 1fr) 32px; align-items: start; gap: 9px; padding: 11px; border: 1px solid #e5ebef; border-radius: 11px; background: #fafcfc; }
+.shared-auth-scope > span { display: inline-flex; width: 27px; height: 27px; align-items: center; justify-content: center; border-radius: 8px; background: #eaf8f4; color: #299e81; font-size: 9px; font-weight: 800; }
+.shared-auth-scope > div { display: grid; grid-template-columns: minmax(120px, .42fr) minmax(220px, 1fr); gap: 8px; }
+.shared-auth-scope .ant-form-item { margin-bottom: 0; }
+.shared-quality-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; width: 100%; }
+.shared-quality-grid .ant-checkbox-wrapper { margin: 0; padding: 8px 10px; border: 1px solid #e5ebef; border-radius: 9px; background: #fafbfc; font-size: 11px; }
+.shared-config-footer { position: absolute; z-index: 2; right: 0; bottom: 0; left: 0; display: flex; justify-content: flex-end; gap: 8px; padding: 14px 22px; border-top: 1px solid #e5eaed; background: rgba(255, 255, 255, .96); backdrop-filter: blur(8px); }
+.shared-process-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 13px; }
+.shared-process-toolbar > span { color: #8d99a7; font-size: 10px; }
+.shared-process-layout { display: grid; grid-template-columns: minmax(350px, 1fr) 250px; gap: 14px; }
+.shared-process-list { display: flex; flex-direction: column; gap: 8px; }
+.shared-process-list > [role="button"] { display: grid; grid-template-columns: 32px 38px minmax(0, 1fr) auto; align-items: center; gap: 9px; width: 100%; min-height: 60px; padding: 9px 11px; border: 1px solid #e2e9e7; border-radius: 11px; background: #fff; cursor: pointer; text-align: left; }
+.shared-process-list > [role="button"].is-selected { border-color: #31b895; box-shadow: 0 0 0 3px rgba(49, 184, 149, .09); }
+.shared-process-index { color: #a0acb8; font-family: 'Cascadia Code', monospace; font-size: 9px; }
+.shared-process-list > [role="button"] > i { display: flex; width: 34px; height: 34px; align-items: center; justify-content: center; border-radius: 10px; font-style: normal; }
+.shared-process-list b { display: block; color: #34495e; font-size: 12px; }
+.shared-process-list small { display: block; margin-top: 2px; color: #96a1ae; font-size: 9px; }
+.shared-step-editor { padding: 14px; border: 1px solid #e4eaed; border-radius: 12px; background: #f8fafb; }
+.shared-step-editor__heading { display: flex; align-items: center; gap: 7px; margin-bottom: 14px; color: #34495e; }
+.shared-step-editor label { display: flex; flex-direction: column; gap: 6px; margin-bottom: 13px; color: #718095; font-size: 10px; }
+.shared-step-editor label > div { display: flex; align-items: center; gap: 8px; }
+.shared-step-editor label > div > span { color: #8d99a7; }
+@media (max-width: 760px) { .shared-process-layout { grid-template-columns: 1fr; } .shared-quality-grid { grid-template-columns: 1fr; } }

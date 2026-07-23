@@ -1,22 +1,27 @@
 import React, { useState } from 'react';
-import { Building2, CalendarDays, ChevronDown, ChevronLeft, Fingerprint, ShieldCheck, UserRoundCheck } from 'lucide-react';
+import { Building2, CalendarDays, ChevronDown, ChevronLeft, FileText, Fingerprint, PenLine, ShieldCheck, UserRoundCheck } from 'lucide-react';
 import { AUTHORIZATION_RECORDS, AuthorizationRecord } from '../../../data/mockData';
 import { useApp } from '../../../context/AppContext';
 
 type Filter = 'all' | 'active' | 'inactive';
 
 const statusMeta = {
+  pending: { label: '待签署', color: '#B57918', background: '#FFF5DF' },
   active: { label: '生效中', color: '#2B9C82', background: '#E8F7F4' },
   expired: { label: '已到期', color: '#9CA3AF', background: '#F1F2F4' },
   revoked: { label: '已撤回', color: '#E26D5A', background: '#FFF0ED' },
 };
 
 export function AuthorizationCenter() {
-  const { navigate } = useApp();
+  const { navigate, signedAgreements } = useApp();
   const [filter, setFilter] = useState<Filter>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const activeCount = AUTHORIZATION_RECORDS.filter((record) => record.status === 'active').length;
-  const filtered = AUTHORIZATION_RECORDS.filter((record) => filter === 'all' || (filter === 'active' ? record.status === 'active' : record.status !== 'active'));
+  const records = AUTHORIZATION_RECORDS.map((record): AuthorizationRecord => {
+    const signed = signedAgreements[record.id];
+    return signed ? { ...record, status: 'active', authorizedBy: '张 *', authorizedAt: signed.signedAt, expiresAt: signed.expiresAt, agreementUrl: signed.pdfUrl, agreementFileName: signed.fileName } : record;
+  });
+  const activeCount = records.filter((record) => record.status === 'active').length;
+  const filtered = records.filter((record) => filter === 'all' || (filter === 'active' ? record.status === 'active' : record.status !== 'active'));
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
@@ -34,7 +39,7 @@ export function AuthorizationCenter() {
           </div>
           <div className="flex-1">
             <p className="text-sm font-semibold text-white">授权数据详情</p>
-            <p className="text-xs text-white/55 mt-1">共 {AUTHORIZATION_RECORDS.length} 条记录，{activeCount} 项授权生效中</p>
+            <p className="text-xs text-white/55 mt-1">共 {records.length} 条记录，{activeCount} 项授权生效中</p>
           </div>
           <div className="w-2 h-2 rounded-full bg-[#7DDFC8] shadow-[0_0_0_5px_rgba(125,223,200,.12)]" />
         </div>
@@ -43,9 +48,9 @@ export function AuthorizationCenter() {
       <div className="relative z-[5] flex-shrink-0 bg-[#F5F6F8] px-4 pt-3 pb-2 border-b border-gray-100">
         <div className="grid grid-cols-3 gap-1 rounded-xl bg-[#E9EBEE] p-1">
           {([
-            ['all', `全部 ${AUTHORIZATION_RECORDS.length}`],
+            ['all', `全部 ${records.length}`],
             ['active', `生效中 ${activeCount}`],
-            ['inactive', `已失效 ${AUTHORIZATION_RECORDS.length - activeCount}`],
+            ['inactive', `待签 / 失效 ${records.length - activeCount}`],
           ] as Array<[Filter, string]>).map(([key, label]) => (
             <button key={key} onClick={() => setFilter(key)} className={`py-2 rounded-lg text-xs transition-all ${filter === key ? 'bg-white text-[#26384A] shadow-sm font-semibold' : 'text-gray-500'}`}>{label}</button>
           ))}
@@ -55,7 +60,7 @@ export function AuthorizationCenter() {
       <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
         <div className="px-4 py-3 space-y-3">
           {filtered.map((record) => (
-            <AuthorizationCard key={record.id} record={record} expanded={expandedId === record.id} onToggle={() => setExpandedId(expandedId === record.id ? null : record.id)} />
+            <AuthorizationCard key={record.id} record={record} expanded={expandedId === record.id} onToggle={() => setExpandedId(expandedId === record.id ? null : record.id)} onOpenAgreement={() => navigate('authorization-agreement', { authorizationId: record.id })} />
           ))}
         </div>
 
@@ -68,7 +73,7 @@ export function AuthorizationCenter() {
   );
 }
 
-function AuthorizationCard({ record, expanded, onToggle }: { record: AuthorizationRecord; expanded: boolean; onToggle: () => void }) {
+function AuthorizationCard({ record, expanded, onToggle, onOpenAgreement }: { record: AuthorizationRecord; expanded: boolean; onToggle: () => void; onOpenAgreement: () => void }) {
   const meta = statusMeta[record.status];
   return (
     <article className="bg-white rounded-2xl overflow-hidden shadow-[0_5px_22px_rgba(46,61,79,0.045)]">
@@ -86,7 +91,7 @@ function AuthorizationCard({ record, expanded, onToggle }: { record: Authorizati
           </div>
         </div>
         <div className="mt-3 flex items-center justify-between border-t border-gray-50 pt-3">
-          <span className="text-[11px] text-gray-400">授权人 · {record.authorizedBy}</span>
+          <span className="text-[11px] text-gray-400">{record.status === 'pending' ? '签署后立即生效' : `授权人 · ${record.authorizedBy}`}</span>
           <span className="flex items-center gap-1 text-[11px] font-medium text-[#2B9C82]">{expanded ? '收起详情' : '查看详情'}<ChevronDown size={14} className={`transition-transform ${expanded ? 'rotate-180' : ''}`} /></span>
         </div>
       </button>
@@ -114,6 +119,11 @@ function AuthorizationCard({ record, expanded, onToggle }: { record: Authorizati
             <p className="text-[11px] text-gray-400">授权用途</p>
             <p className="text-xs text-gray-600 mt-1 leading-5">{record.purpose}</p>
           </div>
+
+          {record.agreementUrl && <div className="mt-3 flex gap-2">
+            <button onClick={onOpenAgreement} className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-xl border border-[#D9E7E3] bg-white text-[11px] font-semibold text-[#4B665F]"><FileText size={14} />查看协议 PDF</button>
+            {record.status === 'pending' && <button onClick={onOpenAgreement} className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#2FAE8E] text-[11px] font-semibold text-white"><PenLine size={14} />签署授权</button>}
+          </div>}
         </div>
       )}
     </article>
