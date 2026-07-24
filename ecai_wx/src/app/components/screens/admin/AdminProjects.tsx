@@ -6,10 +6,8 @@ import {
   Col,
   Descriptions,
   Drawer,
-  Dropdown,
   Form,
   Input,
-  InputNumber,
   message,
   Modal,
   Progress,
@@ -22,30 +20,22 @@ import {
   Tooltip,
 } from 'antd';
 import {
-  ApartmentOutlined,
   ArrowLeftOutlined,
-  AuditOutlined,
   BankOutlined,
-  BarChartOutlined,
   CalendarOutlined,
   CloudDownloadOutlined,
   DatabaseOutlined,
-  DownOutlined,
   DownloadOutlined,
-  EditOutlined,
   EyeOutlined,
   FileProtectOutlined,
   FileTextOutlined,
   FolderOpenOutlined,
   NodeIndexOutlined,
-  PlayCircleFilled,
   PlusOutlined,
   ReloadOutlined,
   SearchOutlined,
-  SettingOutlined,
   SafetyCertificateOutlined,
   RobotOutlined,
-  UnorderedListOutlined,
 } from '@ant-design/icons';
 import {
   AuthorizationConfigData,
@@ -61,13 +51,13 @@ import {
   Project,
   ProjectAuthorization,
   ProjectConfigItem,
-  ProjectJob,
   ProjectJobStatus,
   ProjectStatus,
-  ProjectTaskItem,
 } from './projectData';
 import { AudioDataDetails, AudioDataDrawer } from './AudioDataDrawer';
-import { CONFIG_CREATE_OPTIONS, ConfigCreateDrawer, ConfigCreateType, CreatedConfigPayload } from './ConfigCreateDrawer';
+import { ProjectTemplateConfig } from './ProjectTemplateConfig';
+import { ProjectProcedureConfig } from './ProjectProcedureConfig';
+import { ConfigCreateDrawer, ConfigCreateType, CreatedConfigPayload } from './ConfigCreateDrawer';
 import { useApp } from '../../../context/AppContext';
 import { resolveAgreementUrl } from '../../../data/authorizationAgreement';
 import { AgreementPdfPreview } from '../../common/AgreementPdfPreview';
@@ -86,14 +76,6 @@ const TYPE_META = {
   text: { label: '文本', color: '#4F6EF7' },
   image: { label: '图片', color: '#E79B2D' },
   mixed: { label: '多模态', color: '#8C68D6' },
-};
-
-const TASK_STATUS = {
-  draft: { label: '草稿', color: 'default' },
-  pending: { label: '待启动', color: 'warning' },
-  active: { label: '进行中', color: 'success' },
-  paused: { label: '已暂停', color: 'orange' },
-  completed: { label: '已完成', color: 'blue' },
 };
 
 const JOB_STATUS: Record<ProjectJobStatus, { label: string; color: string }> = {
@@ -122,13 +104,6 @@ const AUTH_STATUS: Record<AuthorizationStatus, { label: string; color: string }>
   expired: { label: '已过期', color: 'default' },
 };
 
-const CONFIG_TYPE = {
-  authorization: { label: '授权配置', icon: <FileProtectOutlined />, color: '#2EAD8B', bg: '#EAF8F4' },
-  template: { label: '模板配置', icon: <FileTextOutlined />, color: '#4F6EF7', bg: '#EEF1FF' },
-  process: { label: '流程配置', icon: <NodeIndexOutlined />, color: '#8C68D6', bg: '#F4EFFE' },
-  model: { label: '模型配置', icon: <RobotOutlined />, color: '#2EAD8B', bg: '#EAF8F4' },
-};
-
 const CONFIG_STATUS = {
   draft: { label: '草稿', color: 'default' },
   pending: { label: '待生效', color: 'warning' },
@@ -136,10 +111,6 @@ const CONFIG_STATUS = {
   disabled: { label: '已停用', color: 'orange' },
   history: { label: '历史版本', color: 'default' },
 };
-
-function percent(completed: number, target: number) {
-  return target > 0 ? Math.min(100, Math.round((completed / target) * 100)) : 0;
-}
 
 function AuthorizationConfigDetail({ config, projectName }: { config: ProjectConfigItem; projectName: string }) {
   const detail = config.authorization;
@@ -200,29 +171,33 @@ export function AdminProjects() {
   const { signedAgreements } = useApp();
   const [projects, setProjects] = useState(PROJECTS);
   const [jobs, setJobs] = useState(PROJECT_JOBS);
+  const [collectionData, setCollectionData] = useState(COLLECTION_DATA);
   const [authorizations, setAuthorizations] = useState(PROJECT_AUTHORIZATIONS);
   const [projectConfigs, setProjectConfigs] = useState(PROJECT_CONFIGS);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [activeTab, setActiveTab] = useState('jobs');
+  const [activeTab, setActiveTab] = useState('data');
   const [projectSearch, setProjectSearch] = useState('');
   const [projectStatus, setProjectStatus] = useState<string>();
-  const [jobSearch, setJobSearch] = useState('');
-  const [jobStatus, setJobStatus] = useState<string>();
-  const [taskFilter, setTaskFilter] = useState<string>();
-  const [jobDrawer, setJobDrawer] = useState<ProjectJob | null>(null);
   const [newProjectOpen, setNewProjectOpen] = useState(false);
-  const [newTaskOpen, setNewTaskOpen] = useState(false);
   const [audioDrawerData, setAudioDrawerData] = useState<AudioDataDetails | null>(null);
+  const [audioDrawerMode, setAudioDrawerMode] = useState<'view' | 'review'>('view');
   const [configCreateType, setConfigCreateType] = useState<ConfigCreateType | null>(null);
   const [configDetail, setConfigDetail] = useState<ProjectConfigItem | null>(null);
   const [authorizationPdfRecord, setAuthorizationPdfRecord] = useState<ProjectAuthorization | null>(null);
+  const [selectedCollectionDataIds, setSelectedCollectionDataIds] = useState<React.Key[]>([]);
+  const [collectionFilterDraft, setCollectionFilterDraft] = useState<{
+    keyword: string;
+    jobStatus?: ProjectJobStatus;
+    machineStatus?: MachineStatus;
+    authorizationStatus?: AuthorizationStatus;
+  }>({ keyword: '' });
+  const [collectionFilters, setCollectionFilters] = useState(collectionFilterDraft);
+  const [selectedAuthorizationIds, setSelectedAuthorizationIds] = useState<React.Key[]>([]);
   const [projectForm] = Form.useForm();
-  const [taskForm] = Form.useForm();
 
-  const selectedTasks = useMemo(() => PROJECT_TASKS.filter((task) => task.projectId === selectedProject?.id), [selectedProject]);
   const selectedJobs = useMemo(() => jobs.filter((job) => job.projectId === selectedProject?.id), [jobs, selectedProject]);
   const selectedConfigs = useMemo(() => projectConfigs.filter((config) => config.projectId === selectedProject?.id), [projectConfigs, selectedProject]);
-  const selectedData = useMemo(() => COLLECTION_DATA.filter((item) => item.projectId === selectedProject?.id), [selectedProject]);
+  const selectedData = useMemo(() => collectionData.filter((item) => item.projectId === selectedProject?.id), [collectionData, selectedProject]);
   const selectedAuths = useMemo(() => {
     const signedRows: ProjectAuthorization[] = Object.values(signedAgreements).map((agreement) => ({
       id: agreement.id,
@@ -243,6 +218,7 @@ export function AdminProjects() {
   }, [authorizations, selectedProject, signedAgreements]);
 
   const taskMap = useMemo(() => Object.fromEntries(PROJECT_TASKS.map((task) => [task.id, task])), []);
+  const jobMap = useMemo(() => Object.fromEntries(jobs.map((job) => [job.id, job])), [jobs]);
 
   const handleProjectConfigCreated = (payload: CreatedConfigPayload) => {
     if (!selectedProject) return;
@@ -261,8 +237,16 @@ export function AdminProjects() {
     setProjectConfigs((current) => [item, ...current]);
   };
 
-  const openCollectionAudio = (item: CollectionDataItem) => {
+  const openCollectionAudio = (item: CollectionDataItem, mode: 'view' | 'review' = 'view') => {
+    setAudioDrawerMode(mode);
     const machineScores: Partial<Record<MachineStatus, number>> = { passed: 94, failed: 62, error: 0 };
+    const machineMetrics = {
+      passed: { clarity: 94, completeness: 97, transcriptMatch: 96, noiseLimit: 48, pauseDuration: 0.8 },
+      failed: { clarity: 72, completeness: 88, transcriptMatch: 82, noiseLimit: 76, pauseDuration: 2.8 },
+      checking: { clarity: 88, completeness: 94, transcriptMatch: 93, noiseLimit: 62, pauseDuration: 1.4 },
+      pending: {},
+      error: {},
+    } satisfies Record<MachineStatus, Partial<Record<'clarity' | 'completeness' | 'transcriptMatch' | 'noiseLimit' | 'pauseDuration', number>>>;
     const machineSummaries: Record<MachineStatus, string> = {
       pending: '音频已提交，等待进入自动检测队列。',
       checking: '正在检测音频完整度、清晰度与文本匹配度。',
@@ -277,6 +261,16 @@ export function AdminProjects() {
       revoked: '用户已撤回授权，当前音频需停止后续使用。',
       expired: '授权已超过有效期，需要重新获取用户授权。',
     };
+    const recordingTexts = [
+      item.transcript,
+      '请保持自然语速，在安静环境中完整朗读当前屏幕显示的内容。',
+      '本条语音用于项目数据质量评估，请确认录音内容清晰且没有截断。',
+    ];
+    const recordingStatuses: MachineStatus[] = [
+      item.machineStatus,
+      item.machineStatus === 'failed' ? 'failed' : 'passed',
+      item.machineStatus === 'checking' ? 'checking' : 'passed',
+    ];
     setAudioDrawerData({
       id: item.id,
       title: `${taskMap[item.taskId]?.name ?? '语音采集任务'} · ${item.id}`,
@@ -293,22 +287,49 @@ export function AdminProjects() {
       submittedAt: item.submittedAt,
       machineStatus: item.machineStatus,
       machineScore: machineScores[item.machineStatus],
+      machineMetrics: machineMetrics[item.machineStatus],
       machineSummary: machineSummaries[item.machineStatus],
       authorizationStatus: item.authorizationStatus,
       authorizationSummary: authorizationSummaries[item.authorizationStatus],
+      recordings: recordingTexts.map((transcript, index) => {
+        const status = recordingStatuses[index];
+        const duration = index === 0 ? item.duration : item.duration + index * 3;
+        return {
+          id: `${item.id}-R${String(index + 1).padStart(2, '0')}`,
+          label: `录音 ${String(index + 1).padStart(2, '0')}`,
+          transcript,
+          duration,
+          format: 'WAV',
+          sampleRate: '16 kHz',
+          bitDepth: '16 bit',
+          channels: '单声道',
+          fileSize: `${Math.max(96, Math.round(duration * 31.25))} KB`,
+          machineStatus: status,
+          machineScore: machineScores[status],
+          machineMetrics: machineMetrics[status],
+          machineSummary: machineSummaries[status],
+          humanReviewStatus: index === 0 && item.status === 'passed' ? 'passed' : index === 1 && status === 'failed' ? 'failed' : 'pending',
+          rejectionReason: index === 1 && status === 'failed' ? '语音与文本不匹配' : undefined,
+        };
+      }),
     });
+  };
+
+  const reviewCollectionData = (status: 'approved' | 'rejected') => {
+    message.success(status === 'approved' ? '采集数据验收已通过' : '采集数据已驳回');
+    setAudioDrawerData(null);
   };
 
   const openProject = (project: Project) => {
     setSelectedProject(project);
-    setActiveTab('jobs');
-    setTaskFilter(undefined);
-    setJobStatus(undefined);
-    setJobSearch('');
+    setActiveTab('data');
+    setSelectedCollectionDataIds([]);
+    setSelectedAuthorizationIds([]);
   };
 
   const createProject = async () => {
     const values = await projectForm.validateFields();
+    const [template, templateVersion] = values.template.split('|');
     const item: Project = {
       id: `prj-${Date.now().toString().slice(-6)}`,
       code: `PRJ-2026-${String(projects.length + 90).padStart(3, '0')}`,
@@ -325,6 +346,8 @@ export function AdminProjects() {
       authCoverage: 0,
       progress: 0,
       description: values.description || '暂无项目说明',
+      template,
+      templateVersion,
     };
     setProjects((current) => [item, ...current]);
     setNewProjectOpen(false);
@@ -332,35 +355,6 @@ export function AdminProjects() {
     message.success('项目草稿已创建');
   };
 
-  const createTask = async () => {
-    await taskForm.validateFields();
-    setNewTaskOpen(false);
-    taskForm.resetFields();
-    message.success('任务草稿已创建，已归属当前项目');
-  };
-
-  const createJob = () => {
-    if (!selectedProject || selectedTasks.length === 0) return;
-    const task = selectedTasks[0];
-    const item: ProjectJob = {
-      id: `JOB-${Date.now().toString().slice(-8)}`,
-      projectId: selectedProject.id,
-      taskId: task.id,
-      name: `${task.name} · 新作业`,
-      type: task.type,
-      user: '待领取',
-      target: 50,
-      completed: 0,
-      status: 'unassigned',
-      machineStatus: 'pending',
-      authorizationStatus: 'pending',
-      reward: task.reward * 5,
-      deadline: task.endAt,
-      exported: false,
-    };
-    setJobs((current) => [item, ...current]);
-    message.success('已基于任务配置生成 1 条待领取作业');
-  };
 
   const reviewAuthorization = (id: string, status: 'approved' | 'rejected') => {
     setAuthorizations((current) => current.map((item) => item.id === id ? {
@@ -372,9 +366,84 @@ export function AdminProjects() {
     message.success(status === 'approved' ? '授权审核已通过' : '授权申请已驳回');
   };
 
-  const enterTaskJobs = (taskId: string) => {
-    setTaskFilter(taskId);
-    setActiveTab('jobs');
+  const exportAuthorizations = (records: ProjectAuthorization[]) => {
+    if (!records.length) return;
+
+    const escapeCsvCell = (value?: string) => `"${String(value ?? '').replaceAll('"', '""')}"`;
+    const rows = [
+      ['授权记录', '授权用户', '用户ID', '授权内容摘要', '授权版本', '申请时间', '有效期至', '状态', '审核人', '授权方式', '协议文件'],
+      ...records.map((item) => [
+        item.id,
+        item.user,
+        item.userId,
+        item.scope,
+        item.version,
+        item.appliedAt,
+        item.effectiveUntil,
+        AUTH_STATUS[item.status].label,
+        item.reviewer ?? '-',
+        item.authorizationMethod ?? '-',
+        item.agreementFileName ?? '-',
+      ]),
+    ];
+    const content = `\uFEFF${rows.map((row) => row.map(escapeCsvCell).join(',')).join('\r\n')}`;
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `${selectedProject?.code ?? '项目'}_授权信息_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+    message.success(`已导出 ${records.length} 条授权信息`);
+  };
+
+  const exportCollectionData = (records: CollectionDataItem[]) => {
+    if (!records.length) return;
+
+    const escapeCsvCell = (value?: string | number) => `"${String(value ?? '').replaceAll('"', '""')}"`;
+    const rows = [
+      ['数据编号', '数据内容', '采集用户', '作业编号', '作业状态', '机检状态', '授权状态', '提交时间'],
+      ...records.map((item) => {
+        const jobStatus = jobMap[item.jobId]?.status ?? 'submitted';
+        return [
+          item.id,
+          item.transcript,
+          item.user,
+          item.jobId,
+          JOB_STATUS[jobStatus].label,
+          MACHINE_STATUS[item.machineStatus].label,
+          AUTH_STATUS[item.authorizationStatus].label,
+          item.submittedAt,
+        ];
+      }),
+    ];
+    const content = `\uFEFF${rows.map((row) => row.map(escapeCsvCell).join(',')).join('\r\n')}`;
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `${selectedProject?.code ?? '项目'}_采集数据_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+    message.success(`已导出 ${records.length} 条采集数据`);
+  };
+
+  const recheckSelectedCollectionData = () => {
+    const selectedRecords = selectedData.filter((item) => selectedCollectionDataIds.includes(item.id));
+    if (!selectedRecords.length) {
+      message.warning('请先选择需要重新机检的数据');
+      return;
+    }
+    const selectedIds = new Set(selectedRecords.map((item) => item.id));
+    const selectedJobIds = new Set(selectedRecords.map((item) => item.jobId));
+    setCollectionData((current) => current.map((item) => selectedIds.has(item.id) ? { ...item, machineStatus: 'checking', status: 'machine_review' } : item));
+    setJobs((current) => current.map((job) => selectedJobIds.has(job.id) ? { ...job, machineStatus: 'checking', status: 'machine_review' } : job));
+    setSelectedCollectionDataIds([]);
+    message.success(`已使用最新模型配置提交 ${selectedRecords.length} 条数据重新机检`);
   };
 
   const filteredProjects = projects.filter((project) => {
@@ -400,10 +469,16 @@ export function AdminProjects() {
     { title: '类型', dataIndex: 'type', width: 90, render: (value: keyof typeof TYPE_META) => <Tag color={TYPE_META[value].color}>{TYPE_META[value].label}</Tag> },
     { title: '负责人', dataIndex: 'manager', width: 90 },
     {
-      title: '任务 / 作业 / 数据',
+      title: '关联模板',
+      key: 'template',
+      width: 210,
+      render: (_: unknown, project: Project) => <div><div className="pm-dimension-name">{project.template}</div><div className="pm-dimension-meta">{project.templateVersion}</div></div>,
+    },
+    {
+      title: '采集数据',
       key: 'hierarchy',
-      width: 170,
-      render: (_: unknown, project: Project) => <span style={{ color: '#53657A', fontSize: 12 }}><b>{project.taskCount}</b> / <b>{project.jobCount}</b> / <b>{project.dataCount}</b></span>,
+      width: 100,
+      render: (_: unknown, project: Project) => <b style={{ color: '#53657A' }}>{project.dataCount}</b>,
     },
     {
       title: '项目进度',
@@ -423,62 +498,6 @@ export function AdminProjects() {
     },
   ];
 
-  const jobColumns = [
-    {
-      title: '作业',
-      key: 'job',
-      width: 220,
-      render: (_: unknown, job: ProjectJob) => <div><div className="pm-dimension-name">{job.name}</div><div className="pm-dimension-meta">{job.id}</div></div>,
-    },
-    {
-      title: '所属任务',
-      dataIndex: 'taskId',
-      width: 190,
-      render: (taskId: string) => <div><div style={{ fontSize: 12, color: '#405368' }}>{taskMap[taskId]?.name || '-'}</div><div className="pm-dimension-meta">{taskId}</div></div>,
-    },
-    { title: '执行用户', dataIndex: 'user', width: 120, render: (value: string) => <span style={{ color: value === '待领取' ? '#9AA5B2' : '#42566C' }}>{value}</span> },
-    {
-      title: '完成进度',
-      key: 'progress',
-      width: 150,
-      render: (_: unknown, job: ProjectJob) => <div className="pm-mini-progress"><Progress percent={percent(job.completed, job.target)} size="small" strokeColor="#31B895" railColor="#EDF1F3" /><div className="pm-dimension-meta">{job.completed} / {job.target} 条</div></div>,
-    },
-    { title: '作业状态', dataIndex: 'status', width: 100, render: (value: ProjectJobStatus) => <Tag color={JOB_STATUS[value].color}>{JOB_STATUS[value].label}</Tag> },
-    { title: '机检状态', dataIndex: 'machineStatus', width: 110, render: (value: MachineStatus) => <Tag color={MACHINE_STATUS[value].color}>{MACHINE_STATUS[value].label}</Tag> },
-    { title: '授权状态', dataIndex: 'authorizationStatus', width: 100, render: (value: AuthorizationStatus) => <Tag color={AUTH_STATUS[value].color}>{AUTH_STATUS[value].label}</Tag> },
-    { title: '是否导出', dataIndex: 'exported', width: 90, render: (value: boolean) => <span style={{ color: value ? '#2EAD8B' : '#8E99A7' }}>{value ? '已导出' : '未导出'}</span> },
-    {
-      title: '操作',
-      key: 'action',
-      width: 130,
-      fixed: 'right' as const,
-      render: (_: unknown, job: ProjectJob) => <Space size={2}><Button type="link" size="small" onClick={() => setJobDrawer(job)}>查看</Button><Button type="link" size="small" disabled={job.status === 'passed'}>重新分配</Button></Space>,
-    },
-  ];
-
-  const taskColumns = [
-    {
-      title: '任务',
-      key: 'task',
-      width: 230,
-      render: (_: unknown, task: ProjectTaskItem) => <div><div className="pm-dimension-name">{task.name}</div><div className="pm-dimension-meta">{task.id}</div></div>,
-    },
-    { title: '类型', dataIndex: 'type', width: 80, render: (value: 'voice' | 'text' | 'image') => <Tag color={TYPE_META[value].color}>{TYPE_META[value].label}</Tag> },
-    { title: '关联模板', key: 'template', width: 185, render: (_: unknown, task: ProjectTaskItem) => <span style={{ fontSize: 12 }}>{task.template} <Tag>{task.templateVersion}</Tag></span> },
-    { title: '关联流程', key: 'process', width: 170, render: (_: unknown, task: ProjectTaskItem) => <span style={{ fontSize: 12 }}>{task.process} <Tag>{task.processVersion}</Tag></span> },
-    { title: '授权版本', dataIndex: 'authVersion', width: 105, render: (value: string) => <Tag color="cyan">{value}</Tag> },
-    {
-      title: '作业数量',
-      key: 'jobs',
-      width: 130,
-      render: (_: unknown, task: ProjectTaskItem) => <Button type="link" size="small" style={{ padding: 0 }} onClick={() => enterTaskJobs(task.id)}>{task.jobsTotal} 个 <span style={{ color: '#9AA5B2' }}>({task.jobsCompleted} 完成)</span></Button>,
-    },
-    { title: '目标进度', key: 'progress', width: 150, render: (_: unknown, task: ProjectTaskItem) => <div className="pm-mini-progress"><Progress percent={percent(task.completed, task.target)} size="small" strokeColor="#4F6EF7" railColor="#EDF1F3" /><div className="pm-dimension-meta">{task.completed} / {task.target}</div></div> },
-    { title: '负责人', dataIndex: 'manager', width: 90 },
-    { title: '状态', dataIndex: 'status', width: 90, render: (value: keyof typeof TASK_STATUS) => <Tag color={TASK_STATUS[value].color}>{TASK_STATUS[value].label}</Tag> },
-    { title: '操作', key: 'action', width: 110, fixed: 'right' as const, render: () => <Space size={2}><Button type="link" size="small">详情</Button><Button type="text" size="small" icon={<EditOutlined />} /></Space> },
-  ];
-
   const renderProjectList = () => (
     <>
       <section className="pm-hero">
@@ -490,8 +509,8 @@ export function AdminProjects() {
         {[
           { label: '项目总数', value: projects.length, note: '含草稿与历史项目' },
           { label: '进行中项目', value: projects.filter((project) => project.status === 'active').length, note: '当前执行中的项目' },
-          { label: '任务总数', value: projects.reduce((sum, project) => sum + project.taskCount, 0), note: '项目下第二级业务单元' },
-          { label: '作业总数', value: projects.reduce((sum, project) => sum + project.jobCount, 0), note: '用户实际执行单元' },
+          { label: '采集数据总量', value: projects.reduce((sum, project) => sum + project.dataCount, 0), note: '项目下全部采集数据' },
+          { label: '录音总量', value: COLLECTION_DATA.length * 3, note: '每条采集数据可含多条录音' },
         ].map((stat) => <Col xs={12} lg={6} key={stat.label}><Card className="pm-stat-card"><div className="pm-stat-label">{stat.label}</div><div className="pm-stat-value">{stat.value}</div><div className="pm-stat-note">{stat.note}</div></Card></Col>)}
       </Row>
 
@@ -505,78 +524,119 @@ export function AdminProjects() {
     </>
   );
 
-  const renderJobs = () => {
-    const visibleJobs = selectedJobs.filter((job) => {
-      const matchesText = !jobSearch || job.id.toLowerCase().includes(jobSearch.toLowerCase()) || job.name.includes(jobSearch) || job.user.includes(jobSearch);
-      return matchesText && (!jobStatus || job.status === jobStatus) && (!taskFilter || job.taskId === taskFilter);
+  const renderCollectionData = () => {
+    const selectedCollectionRecords = selectedData.filter((item) => selectedCollectionDataIds.includes(item.id));
+    const normalizedKeyword = collectionFilters.keyword.trim().toLowerCase();
+    const filteredData = selectedData.filter((item) => {
+      const jobStatus = jobMap[item.jobId]?.status;
+      const matchesKeyword = !normalizedKeyword || [item.id, item.transcript, item.user, item.jobId].some((value) => value.toLowerCase().includes(normalizedKeyword));
+      return matchesKeyword
+        && (!collectionFilters.jobStatus || jobStatus === collectionFilters.jobStatus)
+        && (!collectionFilters.machineStatus || item.machineStatus === collectionFilters.machineStatus)
+        && (!collectionFilters.authorizationStatus || item.authorizationStatus === collectionFilters.authorizationStatus);
     });
     const stats = [
-      { label: '总作业', value: selectedJobs.length, color: '#4F6EF7' },
-      { label: '已分配', value: selectedJobs.filter((job) => job.user !== '待领取').length, color: '#31B895' },
-      { label: '未分配', value: selectedJobs.filter((job) => job.status === 'unassigned').length, color: '#E6A129' },
+      { label: '采集数据', value: selectedProject?.dataCount ?? selectedData.length, color: '#4F6EF7' },
+      { label: '录音数量', value: selectedData.length * 3, color: '#31B895' },
+      { label: '进行中', value: selectedJobs.filter((job) => job.status === 'in_progress' || job.status === 'machine_review' || job.status === 'human_review').length, color: '#E6A129' },
       { label: '已完成', value: selectedJobs.filter((job) => job.status === 'passed').length, color: '#2EAD8B' },
       { label: '已导出', value: selectedJobs.filter((job) => job.exported).length, color: '#8C68D6' },
       { label: '未导出', value: selectedJobs.filter((job) => !job.exported).length, color: '#7A8798' },
     ];
+    const columns = [
+      { title: '数据编号', dataIndex: 'id', width: 150, render: (value: string) => <span className="project-code">{value}</span> },
+      { title: '数据内容', key: 'content', width: 250, render: (_: unknown, item: (typeof selectedData)[number]) => <div><div className="pm-dimension-name">{item.transcript}</div><div className="pm-dimension-meta">包含 3 条录音 · {item.jobId}</div></div> },
+      { title: '采集用户', dataIndex: 'user', width: 100 },
+      { title: '作业状态', key: 'jobStatus', width: 100, render: (_: unknown, item: (typeof selectedData)[number]) => { const status = jobMap[item.jobId]?.status ?? 'submitted'; return <Tag color={JOB_STATUS[status].color}>{JOB_STATUS[status].label}</Tag>; } },
+      { title: '机检状态', dataIndex: 'machineStatus', width: 110, render: (value: MachineStatus) => <Tag color={MACHINE_STATUS[value].color}>{MACHINE_STATUS[value].label}</Tag> },
+      { title: '授权状态', dataIndex: 'authorizationStatus', width: 100, render: (value: AuthorizationStatus) => <Tag color={AUTH_STATUS[value].color}>{AUTH_STATUS[value].label}</Tag> },
+      { title: '提交时间', dataIndex: 'submittedAt', width: 160 },
+      { title: '操作', key: 'action', width: 120, fixed: 'right' as const, render: (_: unknown, item: (typeof selectedData)[number]) => <Space size={2}><Button type="link" size="small" onClick={() => openCollectionAudio(item, 'view')}>查看</Button><Button type="link" size="small" onClick={() => openCollectionAudio(item, 'review')}>验收</Button></Space> },
+    ];
+    const exportButton = (
+      <Button
+        icon={<CloudDownloadOutlined />}
+        disabled={!selectedCollectionRecords.length}
+        onClick={() => exportCollectionData(selectedCollectionRecords)}
+      >
+        导出数据{selectedCollectionRecords.length ? `（${selectedCollectionRecords.length}）` : ''}
+      </Button>
+    );
+
     return <div className="pm-tab-content">
       <Row gutter={[10, 10]}>{stats.map((stat) => <Col xs={12} sm={8} xl={4} key={stat.label}><Card className="pm-stat-card"><div className="pm-stat-label">{stat.label}</div><div className="pm-stat-value" style={{ color: stat.color }}>{stat.value}</div></Card></Col>)}</Row>
-      <Card className="pm-panel" title="项目作业">
-        <div className="pm-toolbar" style={{ marginBottom: 12 }}>
-          <Space wrap><Button type="primary" style={{ background: '#4F6EF7' }}>作业分配</Button><Button icon={<PlusOutlined />} onClick={createJob}>批量生成作业</Button><Button icon={<CloudDownloadOutlined />}>新建导出</Button></Space>
-          {taskFilter && <Tag closable color="blue" onClose={() => setTaskFilter(undefined)}>已从任务穿透：{taskMap[taskFilter]?.name}</Tag>}
-        </div>
+      <Card
+        className="pm-panel"
+        title="采集数据"
+        extra={<Space>
+          <Button type="primary" icon={<PlusOutlined />} style={{ background: '#31B895' }} onClick={() => message.success('已创建一条待录入的采集数据')}>新增数据</Button>
+          <Tooltip title={selectedCollectionRecords.length ? `将使用最新模型配置重新检测 ${selectedCollectionRecords.length} 条数据` : '请先勾选需要重新机检的数据'}>
+            <span>
+              <Button icon={<ReloadOutlined />} disabled={!selectedCollectionRecords.length} onClick={recheckSelectedCollectionData}>
+                重新机检{selectedCollectionRecords.length ? `（${selectedCollectionRecords.length}）` : ''}
+              </Button>
+            </span>
+          </Tooltip>
+          {selectedCollectionRecords.length ? exportButton : <Tooltip title="请先勾选需要导出的采集数据"><span>{exportButton}</span></Tooltip>}
+        </Space>}
+      >
         <div className="pm-filter-strip">
-          <Input allowClear prefix={<SearchOutlined />} placeholder="作业编号 / 名称 / 执行用户" value={jobSearch} onChange={(event) => setJobSearch(event.target.value)} style={{ width: 250 }} />
-          <Select allowClear placeholder="所属任务" value={taskFilter} onChange={setTaskFilter} style={{ width: 190 }} options={selectedTasks.map((task) => ({ value: task.id, label: task.name }))} />
-          <Select allowClear placeholder="作业状态" value={jobStatus} onChange={setJobStatus} style={{ width: 130 }} options={Object.entries(JOB_STATUS).map(([value, meta]) => ({ value, label: meta.label }))} />
-          <Button icon={<ReloadOutlined />} onClick={() => { setJobSearch(''); setJobStatus(undefined); setTaskFilter(undefined); }}>重置</Button>
+          <Input
+            allowClear
+            prefix={<SearchOutlined />}
+            placeholder="数据编号 / 录音内容 / 用户"
+            style={{ width: 250 }}
+            value={collectionFilterDraft.keyword}
+            onChange={(event) => setCollectionFilterDraft((current) => ({ ...current, keyword: event.target.value }))}
+            onPressEnter={() => setCollectionFilters(collectionFilterDraft)}
+          />
+          <Select
+            placeholder="作业状态"
+            allowClear
+            style={{ width: 130 }}
+            value={collectionFilterDraft.jobStatus}
+            onChange={(value) => setCollectionFilterDraft((current) => ({ ...current, jobStatus: value }))}
+            options={Object.entries(JOB_STATUS).map(([value, meta]) => ({ value, label: meta.label }))}
+          />
+          <Select
+            placeholder="机检状态"
+            allowClear
+            style={{ width: 130 }}
+            value={collectionFilterDraft.machineStatus}
+            onChange={(value) => setCollectionFilterDraft((current) => ({ ...current, machineStatus: value }))}
+            options={Object.entries(MACHINE_STATUS).map(([value, meta]) => ({ value, label: meta.label }))}
+          />
+          <Select
+            placeholder="授权状态"
+            allowClear
+            style={{ width: 130 }}
+            value={collectionFilterDraft.authorizationStatus}
+            onChange={(value) => setCollectionFilterDraft((current) => ({ ...current, authorizationStatus: value }))}
+            options={Object.entries(AUTH_STATUS).map(([value, meta]) => ({ value, label: meta.label }))}
+          />
+          <Button type="primary" style={{ background: '#31B895' }} onClick={() => setCollectionFilters(collectionFilterDraft)}>查询</Button>
+          <Button onClick={() => {
+            const emptyFilters = { keyword: '' };
+            setCollectionFilterDraft(emptyFilters);
+            setCollectionFilters(emptyFilters);
+          }}>重置</Button>
         </div>
-        <Table dataSource={visibleJobs} columns={jobColumns} rowKey="id" size="small" pagination={{ pageSize: 8, size: 'small' }} scroll={{ x: 1280 }} style={{ marginTop: 12 }} />
+        <Table
+          dataSource={filteredData}
+          columns={columns}
+          rowKey="id"
+          rowSelection={{ fixed: true, selectedRowKeys: selectedCollectionDataIds, onChange: setSelectedCollectionDataIds, columnWidth: 48 }}
+          size="small"
+          pagination={{ pageSize: 8, size: 'small', total: filteredData.length, showTotal: (total) => `共 ${total} 条` }}
+          scroll={{ x: 1128 }}
+          style={{ marginTop: 12 }}
+        />
       </Card>
     </div>;
   };
 
-  const renderTasks = () => <div className="pm-tab-content">
-    <Card className="pm-panel" title="项目任务" extra={<Button type="primary" icon={<PlusOutlined />} style={{ background: '#31B895' }} onClick={() => setNewTaskOpen(true)}>新建任务</Button>}>
-      <div style={{ marginBottom: 12, padding: '11px 13px', borderRadius: 10, background: '#F2F7FF', color: '#58708E', fontSize: 12 }}>
-        当前项目包含 {selectedTasks.length} 个任务；每个任务可配置独立模板、流程、授权版本和目标量，并直接生成多条执行作业。
-      </div>
-      <Table dataSource={selectedTasks} columns={taskColumns} rowKey="id" size="small" pagination={false} scroll={{ x: 1320 }} />
-    </Card>
-  </div>;
-
-  const renderConfigs = () => {
-    const columns = [
-      { title: '配置', key: 'config', render: (_: unknown, item: (typeof selectedConfigs)[number]) => { const meta = CONFIG_TYPE[item.type]; return <div className="config-name-cell"><span className="pm-config-type" style={{ color: meta.color, background: meta.bg }}>{meta.icon}</span><div><div className="pm-dimension-name">{item.name}</div><div className="pm-dimension-meta">{item.id}</div></div></div>; } },
-      { title: '类型', dataIndex: 'type', width: 105, render: (value: keyof typeof CONFIG_TYPE) => <Tag>{CONFIG_TYPE[value].label}</Tag> },
-      { title: '版本', dataIndex: 'version', width: 85, render: (value: string) => <b>{value}</b> },
-      { title: '被任务引用', dataIndex: 'usedBy', width: 105, render: (value: number) => `${value} 个任务` },
-      { title: '状态', dataIndex: 'status', width: 100, render: (value: keyof typeof CONFIG_STATUS) => <Tag color={CONFIG_STATUS[value].color}>{CONFIG_STATUS[value].label}</Tag> },
-      { title: '最近更新', key: 'updatedAt', width: 180, render: (_: unknown, item: (typeof selectedConfigs)[number]) => <div><div style={{ fontSize: 12 }}>{item.updatedAt}</div><div className="pm-dimension-meta">{item.updatedBy}</div></div> },
-      { title: '操作', key: 'action', width: 150, render: (_: unknown, item: ProjectConfigItem) => <Space size={2}><Button type="link" size="small" onClick={() => item.type === 'authorization' ? setConfigDetail(item) : message.info('该类型详情正在沿用原配置页面')}>查看</Button><Button type="link" size="small" onClick={() => setConfigCreateType(item.type)}>新建版本</Button></Space> },
-    ];
-    const createMenu = {
-      items: CONFIG_CREATE_OPTIONS.map((option) => ({ key: option.key, icon: option.icon, label: option.label })),
-      onClick: ({ key }: { key: string }) => setConfigCreateType(key as ConfigCreateType),
-    };
-    return <div className="pm-tab-content"><Card className="pm-panel" title="项目配置" extra={<Dropdown menu={createMenu} trigger={['click']}><Button type="primary" icon={<PlusOutlined />} style={{ background: '#31B895' }}>新增配置 <DownOutlined /></Button></Dropdown>}><Table dataSource={selectedConfigs} columns={columns} rowKey="id" size="small" pagination={false} /></Card></div>;
-  };
-
-  const renderCollectionData = () => {
-    const columns = [
-      { title: '数据编号', dataIndex: 'id', width: 150, render: (value: string) => <span className="project-code">{value}</span> },
-      { title: '所属任务 / 作业', key: 'relation', width: 220, render: (_: unknown, item: (typeof selectedData)[number]) => <div><div className="pm-dimension-name">{taskMap[item.taskId]?.name}</div><div className="pm-dimension-meta">{item.jobId}</div></div> },
-      { title: '采集用户', dataIndex: 'user', width: 100 },
-      { title: '音频', key: 'audio', width: 100, render: (_: unknown, item: (typeof selectedData)[number]) => <Button className="pm-audio-button" size="small" shape="round" icon={<PlayCircleFilled />} aria-label={`播放并查看 ${item.id}`} onClick={() => openCollectionAudio(item)}>{item.duration}s</Button> },
-      { title: '机检状态', dataIndex: 'machineStatus', width: 110, render: (value: MachineStatus) => <Tag color={MACHINE_STATUS[value].color}>{MACHINE_STATUS[value].label}</Tag> },
-      { title: '授权状态', dataIndex: 'authorizationStatus', width: 100, render: (value: AuthorizationStatus) => <Tag color={AUTH_STATUS[value].color}>{AUTH_STATUS[value].label}</Tag> },
-      { title: '提交时间', dataIndex: 'submittedAt', width: 160 },
-      { title: '操作', key: 'action', width: 90, fixed: 'right' as const, render: (_: unknown, item: (typeof selectedData)[number]) => <Button type="link" size="small" onClick={() => openCollectionAudio(item)}>查看详情</Button> },
-    ];
-    return <div className="pm-tab-content"><Card className="pm-panel" title="采集数据" extra={<Button icon={<CloudDownloadOutlined />}>导出数据</Button>}><div className="pm-filter-strip"><Input prefix={<SearchOutlined />} placeholder="数据编号 / 作业编号 / 用户" style={{ width: 250 }} /><Select placeholder="机检状态" allowClear style={{ width: 130 }} options={Object.entries(MACHINE_STATUS).map(([value, meta]) => ({ value, label: meta.label }))} /><Select placeholder="授权状态" allowClear style={{ width: 130 }} options={Object.entries(AUTH_STATUS).map(([value, meta]) => ({ value, label: meta.label }))} /><Button type="primary" style={{ background: '#4F6EF7' }}>查询</Button></div><Table dataSource={selectedData} columns={columns} rowKey="id" size="small" pagination={{ pageSize: 8, size: 'small', total: selectedProject?.dataCount || selectedData.length, showTotal: (total) => `共 ${total} 条` }} scroll={{ x: 1030 }} style={{ marginTop: 12 }} /></Card></div>;
-  };
-
   const renderAuthorizations = () => {
+    const selectedAuthorizationRecords = selectedAuths.filter((item) => selectedAuthorizationIds.includes(item.id));
     const renderAgreementAction = (item: ProjectAuthorization) => {
       const hasAgreement = Boolean(item.signedPdfUrl);
       const button = (
@@ -621,56 +681,91 @@ export function AdminProjects() {
         ) : renderAgreementAction(item),
       },
     ];
-    return <div className="pm-tab-content"><Card className="pm-panel" title="项目授权信息" extra={<Badge count={selectedAuths.filter((item) => item.status === 'pending').length}><Button icon={<AuditOutlined />}>待审核授权</Button></Badge>}><Table dataSource={selectedAuths} columns={columns} rowKey="id" size="small" pagination={false} scroll={{ x: 1200 }} /></Card></div>;
-  };
+    const exportButton = (
+      <Button
+        icon={<CloudDownloadOutlined />}
+        disabled={!selectedAuthorizationRecords.length}
+        onClick={() => exportAuthorizations(selectedAuthorizationRecords)}
+      >
+        批量导出{selectedAuthorizationRecords.length ? `（${selectedAuthorizationRecords.length}）` : ''}
+      </Button>
+    );
 
-  const renderStatistics = () => {
-    const jobCount = selectedJobs.length;
-    const completedJobs = selectedJobs.filter((job) => job.status === 'passed').length;
-    const abnormalJobs = selectedJobs.filter((job) => job.status === 'rework' || job.machineStatus === 'failed').length;
-    const columns = [
-      { title: '任务', key: 'task', render: (_: unknown, task: ProjectTaskItem) => <div><div className="pm-dimension-name">{task.name}</div><div className="pm-dimension-meta">{task.id}</div></div> },
-      { title: '作业数', dataIndex: 'jobsTotal', width: 85 },
-      { title: '完成作业', dataIndex: 'jobsCompleted', width: 90 },
-      { title: '目标数据量', dataIndex: 'target', width: 100 },
-      { title: '已采集量', dataIndex: 'completed', width: 90 },
-      { title: '完成率', key: 'completion', width: 150, render: (_: unknown, task: ProjectTaskItem) => <Progress percent={percent(task.completed, task.target)} size="small" strokeColor="#31B895" railColor="#EDF1F3" /> },
-      { title: '机检通过率', key: 'machine', width: 115, render: (_: unknown, task: ProjectTaskItem) => `${Math.max(82, 98 - task.jobsReview * 4)}%` },
-      { title: '质检通过率', key: 'qc', width: 115, render: (_: unknown, task: ProjectTaskItem) => `${Math.max(79, 96 - task.jobsRunning * 3)}%` },
-      { title: '授权覆盖率', key: 'auth', width: 115, render: () => `${selectedProject?.authCoverage || 0}%` },
-      { title: '穿透', key: 'action', width: 80, render: (_: unknown, task: ProjectTaskItem) => <Button type="link" size="small" onClick={() => enterTaskJobs(task.id)}>看作业</Button> },
-    ];
-    return <div className="pm-tab-content">
-      <Row gutter={[12, 12]}>{[
-        { label: '作业总数', value: jobCount, note: '当前项目全部作业' },
-        { label: '已完成作业', value: completedJobs, note: `完成率 ${jobCount ? Math.round(completedJobs / jobCount * 100) : 0}%` },
-        { label: '异常作业', value: abnormalJobs, note: '返工或机检不通过' },
-        { label: '授权覆盖率', value: `${selectedProject?.authCoverage || 0}%`, note: '参与用户有效授权' },
-      ].map((stat) => <Col xs={12} lg={6} key={stat.label}><Card className="pm-stat-card"><div className="pm-stat-label">{stat.label}</div><div className="pm-stat-value">{stat.value}</div><div className="pm-stat-note">{stat.note}</div></Card></Col>)}</Row>
-      <Card className="pm-panel" title="任务分组作业统计" extra={<Button icon={<CloudDownloadOutlined />}>导出统计</Button>}><Table dataSource={selectedTasks} columns={columns} rowKey="id" size="small" pagination={false} scroll={{ x: 1050 }} /></Card>
-    </div>;
+    return (
+      <div className="pm-tab-content">
+        <Card
+          className="pm-panel"
+          title="项目授权信息"
+          extra={(
+            <Space>
+              {selectedAuthorizationRecords.length ? exportButton : (
+                <Tooltip title="请先勾选需要导出的授权记录">
+                  <span>{exportButton}</span>
+                </Tooltip>
+              )}
+              <Button
+                type="primary"
+                icon={<FileProtectOutlined />}
+                style={{ background: '#31B895' }}
+                onClick={() => setConfigCreateType('authorization')}
+              >
+                配置授权功能
+              </Button>
+            </Space>
+          )}
+        >
+          <Table
+            dataSource={selectedAuths}
+            columns={columns}
+            rowKey="id"
+            rowSelection={{
+              selectedRowKeys: selectedAuthorizationIds,
+              onChange: setSelectedAuthorizationIds,
+              columnWidth: 48,
+            }}
+            size="small"
+            pagination={false}
+            scroll={{ x: 1248 }}
+          />
+        </Card>
+      </div>
+    );
   };
 
   const renderProjectDetail = () => {
     if (!selectedProject) return null;
+    if (audioDrawerData) {
+      return (
+        <AudioDataDrawer
+          data={audioDrawerData}
+          open
+          presentation="page"
+          mode={audioDrawerMode}
+          onClose={() => setAudioDrawerData(null)}
+          onApprove={() => reviewCollectionData('approved')}
+          onReject={() => reviewCollectionData('rejected')}
+        />
+      );
+    }
     const tabs = [
-      { key: 'jobs', label: <span><UnorderedListOutlined /> 项目作业 <Badge count={selectedJobs.length} showZero /></span>, children: renderJobs() },
-      { key: 'configs', label: <span><SettingOutlined /> 项目配置 <Badge count={selectedConfigs.length} showZero /></span>, children: renderConfigs() },
       { key: 'data', label: <span><DatabaseOutlined /> 采集数据 <Badge count={selectedProject.dataCount} showZero /></span>, children: renderCollectionData() },
+      {
+        key: 'templates',
+        label: <span><FileTextOutlined /> 模板配置</span>,
+        children: <ProjectTemplateConfig projectId={selectedProject.id} projectName={selectedProject.name} template={selectedProject.template} templateVersion={selectedProject.templateVersion} projectType={selectedProject.type} />,
+      },
+      {
+        key: 'procedures',
+        label: <span><NodeIndexOutlined /> 工序配置</span>,
+        children: <ProjectProcedureConfig projectName={selectedProject.name} template={`${selectedProject.template} ${selectedProject.templateVersion}`} projectType={selectedProject.type} />,
+      },
       { key: 'authorizations', label: <span><FileProtectOutlined /> 授权信息 <Badge count={selectedAuths.length} showZero /></span>, children: renderAuthorizations() },
-      { key: 'tasks', label: <span><ApartmentOutlined /> 项目任务 <Badge count={selectedTasks.length} showZero /></span>, children: renderTasks() },
-      { key: 'statistics', label: <span><BarChartOutlined /> 作业统计</span>, children: renderStatistics() },
     ];
     return <>
       <section className="pm-detail-header">
-        <button className="pm-back" onClick={() => setSelectedProject(null)} style={{ border: 0, background: 'none', padding: 0 }}><ArrowLeftOutlined /> 返回项目列表</button>
+        <button className="pm-back" onClick={() => { setSelectedProject(null); setSelectedCollectionDataIds([]); setSelectedAuthorizationIds([]); }} style={{ border: 0, background: 'none', padding: 0 }}><ArrowLeftOutlined /> 返回项目列表</button>
         <div className="pm-project-heading"><h2>{selectedProject.name}</h2><Tag color={PROJECT_STATUS[selectedProject.status].color}>{PROJECT_STATUS[selectedProject.status].label}</Tag><Tag color={TYPE_META[selectedProject.type].color}>{TYPE_META[selectedProject.type].label}</Tag></div>
         <div className="pm-project-meta"><span>项目编号：{selectedProject.code}</span><span>负责人：{selectedProject.manager}</span><span>项目周期：{selectedProject.startAt} — {selectedProject.endAt}</span><span>整体进度：{selectedProject.progress}%</span></div>
-        <div className="pm-hierarchy">
-          <div className="pm-hierarchy-node"><span className="pm-hierarchy-icon"><FolderOpenOutlined /></span><div><div className="pm-hierarchy-value">1</div><div className="pm-hierarchy-label">当前项目 · 上级容器</div></div></div>
-          <div className="pm-hierarchy-node"><span className="pm-hierarchy-icon"><ApartmentOutlined /></span><div><div className="pm-hierarchy-value">{selectedTasks.length}</div><div className="pm-hierarchy-label">项目任务 · 业务配置与目标</div></div></div>
-          <div className="pm-hierarchy-node"><span className="pm-hierarchy-icon"><UnorderedListOutlined /></span><div><div className="pm-hierarchy-value">{selectedJobs.length}</div><div className="pm-hierarchy-label">执行作业 · 用户最小执行单元</div></div></div>
-        </div>
       </section>
       <Tabs className="pm-tabs" activeKey={activeTab} onChange={setActiveTab} items={tabs} />
     </>;
@@ -682,37 +777,16 @@ export function AdminProjects() {
     <Modal title="新建项目" open={newProjectOpen} onCancel={() => setNewProjectOpen(false)} onOk={createProject} okText="创建草稿" cancelText="取消" okButtonProps={{ style: { background: '#31B895' } }} width={680}>
       <Form form={projectForm} layout="vertical" style={{ marginTop: 14 }}>
         <Row gutter={14}><Col span={16}><Form.Item label="项目名称" name="name" rules={[{ required: true }]}><Input placeholder="请输入项目名称" /></Form.Item></Col><Col span={8}><Form.Item label="项目类型" name="type" rules={[{ required: true }]}><Select options={Object.entries(TYPE_META).map(([value, meta]) => ({ value, label: meta.label }))} /></Form.Item></Col></Row>
+        <Form.Item label="关联模板" name="template" rules={[{ required: true, message: '请选择项目固定使用的模板' }]}><Select placeholder="一个项目固定关联一套模板" options={[
+          { value: '普通话语音采集 · 标准版|v6', label: '普通话语音采集 · 标准版（v6）' },
+          { value: '粤语自然对话录制|v3', label: '粤语自然对话录制（v3）' },
+          { value: '电商多模态数据采集|v1', label: '电商多模态数据采集（v1）' },
+        ]} /></Form.Item>
         <Row gutter={14}><Col span={8}><Form.Item label="负责人" name="manager" rules={[{ required: true }]}><Input placeholder="项目负责人" /></Form.Item></Col><Col span={8}><Form.Item label="开始日期" name="startAt" rules={[{ required: true }]}><Input type="date" /></Form.Item></Col><Col span={8}><Form.Item label="结束日期" name="endAt" rules={[{ required: true }]}><Input type="date" /></Form.Item></Col></Row>
         <Form.Item label="项目说明" name="description"><Input.TextArea rows={3} placeholder="说明项目目标、数据范围和交付要求" /></Form.Item>
       </Form>
     </Modal>
 
-    <Modal title={`新建任务 · ${selectedProject?.name || ''}`} open={newTaskOpen} onCancel={() => setNewTaskOpen(false)} onOk={createTask} okText="创建任务" cancelText="取消" okButtonProps={{ style: { background: '#31B895' } }} width={720}>
-      <Form form={taskForm} layout="vertical" style={{ marginTop: 14 }}>
-        <Row gutter={14}><Col span={16}><Form.Item label="任务名称" name="name" rules={[{ required: true }]}><Input placeholder="请输入任务名称" /></Form.Item></Col><Col span={8}><Form.Item label="采集类型" name="type" rules={[{ required: true }]}><Select options={['voice', 'text', 'image'].map((value) => ({ value, label: TYPE_META[value as 'voice' | 'text' | 'image'].label }))} /></Form.Item></Col></Row>
-        <Row gutter={14}><Col span={8}><Form.Item label="授权版本" name="auth" rules={[{ required: true }]}><Select options={selectedConfigs.filter((item) => item.type === 'authorization').map((item) => ({ value: item.id, label: `${item.name} ${item.version}` }))} /></Form.Item></Col><Col span={8}><Form.Item label="采集模板" name="template" rules={[{ required: true }]}><Select options={selectedConfigs.filter((item) => item.type === 'template').map((item) => ({ value: item.id, label: `${item.name} ${item.version}` }))} /></Form.Item></Col><Col span={8}><Form.Item label="执行流程" name="process" rules={[{ required: true }]}><Select options={selectedConfigs.filter((item) => item.type === 'process').map((item) => ({ value: item.id, label: `${item.name} ${item.version}` }))} /></Form.Item></Col></Row>
-        <Row gutter={14}><Col span={8}><Form.Item label="目标数据量" name="target" rules={[{ required: true }]}><InputNumber min={1} style={{ width: '100%' }} /></Form.Item></Col><Col span={8}><Form.Item label="单作业奖励" name="reward" rules={[{ required: true }]}><InputNumber min={1} suffix="积分" style={{ width: '100%' }} /></Form.Item></Col><Col span={8}><Form.Item label="任务负责人" name="manager" rules={[{ required: true }]}><Input /></Form.Item></Col></Row>
-      </Form>
-    </Modal>
-
-    <Drawer title="作业详情" size={560} open={Boolean(jobDrawer)} onClose={() => setJobDrawer(null)}>
-      {jobDrawer && <div>
-        <div className="pm-drawer-section"><div className="pm-drawer-title">层级归属</div><Descriptions size="small" column={1} items={[
-          { key: 'project', label: '所属项目', children: selectedProject?.name },
-          { key: 'task', label: '所属任务', children: `${taskMap[jobDrawer.taskId]?.name}（${jobDrawer.taskId}）` },
-          { key: 'job', label: '作业编号', children: jobDrawer.id },
-        ]} /></div>
-        <div className="pm-drawer-section"><div className="pm-drawer-title">执行情况</div><Descriptions size="small" column={1} items={[
-          { key: 'user', label: '执行用户', children: jobDrawer.user },
-          { key: 'progress', label: '完成量', children: `${jobDrawer.completed} / ${jobDrawer.target} 条` },
-          { key: 'status', label: '作业状态', children: <Tag color={JOB_STATUS[jobDrawer.status].color}>{JOB_STATUS[jobDrawer.status].label}</Tag> },
-          { key: 'machine', label: '机检状态', children: <Tag color={MACHINE_STATUS[jobDrawer.machineStatus].color}>{MACHINE_STATUS[jobDrawer.machineStatus].label}</Tag> },
-          { key: 'auth', label: '授权状态', children: <Tag color={AUTH_STATUS[jobDrawer.authorizationStatus].color}>{AUTH_STATUS[jobDrawer.authorizationStatus].label}</Tag> },
-          { key: 'deadline', label: '截止日期', children: jobDrawer.deadline },
-        ]} /></div>
-        <Space><Button type="primary" style={{ background: '#31B895' }} disabled={jobDrawer.status === 'passed'}>重新分配</Button><Button disabled={jobDrawer.status === 'passed'}>回收作业</Button></Space>
-      </div>}
-    </Drawer>
     <Drawer
       className="signed-agreement-drawer"
       title={<div className="auth-detail-title"><span><SafetyCertificateOutlined /></span><div><b>用户签署授权协议</b><small>{authorizationPdfRecord?.id}</small></div></div>}
@@ -742,7 +816,6 @@ export function AdminProjects() {
     >
       {configDetail && <AuthorizationConfigDetail config={configDetail} projectName={selectedProject?.name ?? '-'} />}
     </Drawer>
-    <AudioDataDrawer data={audioDrawerData} open={Boolean(audioDrawerData)} onClose={() => setAudioDrawerData(null)} />
     <ConfigCreateDrawer
       type={configCreateType}
       open={Boolean(configCreateType)}

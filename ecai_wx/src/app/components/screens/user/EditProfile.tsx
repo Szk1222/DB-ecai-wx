@@ -5,7 +5,7 @@ import { useApp } from '../../../context/AppContext';
 const languages = ['普通话', '粤语', '四川话', '闽南语', '英语'];
 
 export function EditProfile() {
-  const { user, navigate, updateProfile } = useApp();
+  const { user, navigate, updateProfile, selectedTaskId, editProfileReturnScreen } = useApp();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({
     nickname: user.nickname,
@@ -14,8 +14,20 @@ export function EditProfile() {
     region: user.region,
     language: user.language,
     avatar: user.avatar,
+    phone: user.phone,
   });
   const [saved, setSaved] = useState(false);
+  const phoneBindingRequired = !user.phone;
+
+  function goBack() {
+    if (editProfileReturnScreen === 'task-detail') {
+      navigate('task-detail', { taskId: selectedTaskId ?? undefined });
+    } else if (editProfileReturnScreen === 'account-security') {
+      navigate('account-security');
+    } else {
+      navigate('my-profile');
+    }
+  }
 
   function handleAvatar(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -29,7 +41,15 @@ export function EditProfile() {
     event.preventDefault();
     updateProfile(form);
     setSaved(true);
-    window.setTimeout(() => navigate('my-profile'), 700);
+    window.setTimeout(() => {
+      if (editProfileReturnScreen === 'task-detail') {
+        navigate('task-detail', { taskId: selectedTaskId ?? undefined });
+      } else if (editProfileReturnScreen === 'account-security') {
+        navigate('account-security');
+      } else {
+        navigate('my-profile');
+      }
+    }, 700);
   }
 
   return (
@@ -38,7 +58,7 @@ export function EditProfile() {
         <div className="absolute -right-12 -top-16 w-40 h-40 rounded-full border border-white/10" />
         <div className="absolute right-3 top-10 w-20 h-20 rounded-full bg-[#3DBFA0]/10 blur-xl" />
         <div className="relative flex items-center gap-3">
-          <button type="button" onClick={() => navigate('my-profile')} className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center active:bg-white/25" aria-label="返回">
+          <button type="button" onClick={goBack} className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center active:bg-white/25" aria-label="返回">
             <ChevronLeft size={19} color="white" />
           </button>
           <h1 className="text-base font-semibold text-white">编辑个人信息</h1>
@@ -86,7 +106,20 @@ export function EditProfile() {
 
         <section className="bg-white rounded-2xl overflow-hidden">
           <div className="px-4 pt-3 pb-2"><p className="text-xs font-semibold tracking-wide text-gray-400">账号信息</p></div>
-          <Field label="手机号"><span className="text-sm text-gray-400">{user.phone}</span></Field>
+          <Field label="手机号">
+            {user.phone ? (
+              <span className="text-sm text-gray-400">{user.phone}</span>
+            ) : (
+              <input
+                type="tel"
+                maxLength={11}
+                value={form.phone}
+                onChange={(event) => setForm({ ...form, phone: event.target.value.replace(/\D/g, '') })}
+                className="w-full bg-transparent text-right text-sm text-gray-800 outline-none placeholder:text-gray-400"
+                placeholder="请输入手机号绑定"
+              />
+            )}
+          </Field>
           <Field label="用户编号" last><span className="text-sm text-gray-400">ECAI-{user.id.toUpperCase()}-0268</span></Field>
         </section>
 
@@ -95,7 +128,7 @@ export function EditProfile() {
           手机号与实名信息受安全保护，如需修改请前往帮助与客服进行身份核验。
         </div>
 
-        <button type="submit" disabled={!form.nickname.trim()} className="w-full h-12 rounded-2xl bg-[#3DBFA0] text-white text-sm font-semibold shadow-[0_10px_24px_rgba(61,191,160,0.22)] active:scale-[0.98] transition-transform disabled:opacity-50">
+        <button type="submit" disabled={!form.nickname.trim() || (phoneBindingRequired && form.phone.length !== 11)} className="w-full h-12 rounded-2xl bg-[#3DBFA0] text-white text-sm font-semibold shadow-[0_10px_24px_rgba(61,191,160,0.22)] active:scale-[0.98] transition-transform disabled:opacity-50">
           {saved ? <span className="flex items-center justify-center gap-2"><Check size={17} />已保存</span> : '保存修改'}
         </button>
       </div>

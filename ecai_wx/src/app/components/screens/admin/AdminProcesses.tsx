@@ -40,7 +40,7 @@ import { ConfigCreateDrawer, CreatedConfigPayload } from './ConfigCreateDrawer';
 
 type ProcessCategory = 'voice' | 'text' | 'image';
 type ProcessStatus = 'active' | 'draft' | 'disabled';
-type StepType = 'start' | 'collect' | 'annotate' | 'machine_review' | 'quality' | 'acceptance' | 'complete';
+type StepType = 'start' | 'collect' | 'annotate' | 'machine_review' | 'acceptance' | 'complete';
 
 interface ProcessStep {
   id: string;
@@ -85,7 +85,6 @@ const STEP_META: Record<StepType, { label: string; icon: React.ReactNode; color:
   collect: { label: '采集', icon: <UserOutlined />, color: '#4f6ef7' },
   annotate: { label: '二次复检', icon: <EditOutlined />, color: '#8b6bd6' },
   machine_review: { label: '智能审核', icon: <RobotOutlined />, color: '#3679c8' },
-  quality: { label: '质检', icon: <CheckCircleFilled />, color: '#e59a2d' },
   acceptance: { label: '验收', icon: <FileTextOutlined />, color: '#de6d78' },
   complete: { label: '完成', icon: <CheckCircleFilled />, color: '#269879' },
 };
@@ -98,13 +97,12 @@ const TEMPLATE_OPTIONS = [
 ];
 
 const STEP_DEFAULTS: Record<StepType, ProcessStep> = {
-  start: { id: 'start', type: 'start', name: '开始', enabled: true, fixed: true, assignee: '系统自动', timeout: 0, retry: 0 },
-  collect: { id: 'collect', type: 'collect', name: '数据采集', enabled: true, fixed: true, assignee: '采集用户', timeout: 48, retry: 1 },
+  start: { id: 'start', type: 'start', name: '开始', enabled: true, fixed: false, assignee: '系统自动', timeout: 0, retry: 0 },
+  collect: { id: 'collect', type: 'collect', name: '数据采集', enabled: true, fixed: false, assignee: '采集用户', timeout: 48, retry: 1 },
   annotate: { id: 'annotate', type: 'annotate', name: '二次复检', enabled: true, fixed: false, assignee: '复检人员', timeout: 24, retry: 1 },
   machine_review: { id: 'machine-review', type: 'machine_review', name: '智能审核', enabled: true, fixed: false, assignee: '系统自动', timeout: 1, retry: 2, threshold: 80 },
-  quality: { id: 'quality', type: 'quality', name: '人工质检', enabled: true, fixed: false, assignee: '质检人员', timeout: 12, retry: 1, threshold: 85 },
   acceptance: { id: 'acceptance', type: 'acceptance', name: '项目验收', enabled: true, fixed: false, assignee: '项目管理员', timeout: 24, retry: 0 },
-  complete: { id: 'complete', type: 'complete', name: '完成', enabled: true, fixed: true, assignee: '系统自动', timeout: 0, retry: 0 },
+  complete: { id: 'complete', type: 'complete', name: '完成', enabled: true, fixed: false, assignee: '系统自动', timeout: 0, retry: 0 },
 };
 
 function createSteps(types: StepType[]) {
@@ -115,17 +113,17 @@ const INITIAL_PROCESSES: ProcessItem[] = [
   {
     id: 'PROC-202607-01', name: '标准语音采集质检流程', category: 'voice', templateId: 'TPL-240716-01', templateName: '普通话语音采集 · 标准版',
     version: 5, status: 'active', usedBy: 12, updatedAt: '2026-07-20 16:42', updatedBy: '运营管理员',
-    steps: createSteps(['start', 'collect', 'machine_review', 'quality', 'acceptance', 'complete']),
+    steps: createSteps(['start', 'machine_review', 'collect', 'acceptance', 'complete']),
   },
   {
     id: 'PROC-202607-02', name: '自然对话采集二次复检流程', category: 'voice', templateId: 'TPL-240705-03', templateName: '粤语自然对话录制',
     version: 3, status: 'active', usedBy: 6, updatedAt: '2026-07-18 11:08', updatedBy: '陈佳',
-    steps: createSteps(['start', 'collect', 'annotate', 'machine_review', 'quality', 'complete']),
+    steps: createSteps(['start', 'machine_review', 'collect', 'annotate', 'complete']),
   },
   {
     id: 'PROC-202607-03', name: '文本改写双重质检流程', category: 'text', templateId: 'TPL-240711-02', templateName: '客服场景文本改写',
     version: 1, status: 'draft', usedBy: 0, updatedAt: '2026-07-16 09:30', updatedBy: '李婷',
-    steps: createSteps(['start', 'collect', 'annotate', 'quality', 'acceptance', 'complete']),
+    steps: createSteps(['start', 'collect', 'annotate', 'acceptance', 'complete']),
   },
 ];
 
@@ -138,7 +136,7 @@ export function AdminProcesses() {
   const [editing, setEditing] = useState<ProcessItem | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
-  const [steps, setSteps] = useState<ProcessStep[]>(createSteps(['start', 'collect', 'machine_review', 'quality', 'complete']));
+  const [steps, setSteps] = useState<ProcessStep[]>(createSteps(['start', 'machine_review', 'collect', 'complete']));
   const [selectedStepId, setSelectedStepId] = useState('collect');
   const [dirty, setDirty] = useState(false);
   const [stepErrors, setStepErrors] = useState<string[]>([]);
@@ -162,7 +160,7 @@ export function AdminProcesses() {
       category: target?.category ?? 'voice',
       templateId: target?.templateId,
     });
-    const nextSteps = target ? cloneSteps(target.steps) : createSteps(['start', 'collect', 'machine_review', 'quality', 'complete']);
+    const nextSteps = target ? normalizeSteps(cloneSteps(target.steps)) : createSteps(['start', 'machine_review', 'collect', 'complete']);
     setSteps(nextSteps);
     setSelectedStepId(nextSteps.find((step) => step.type === 'collect')?.id ?? nextSteps[0].id);
     setStepErrors([]);
@@ -192,13 +190,7 @@ export function AdminProcesses() {
   };
 
   const normalizeSteps = (items: ProcessStep[]) => {
-    const middle = items.filter((step) => !['start', 'collect', 'complete'].includes(step.type));
-    return [
-      items.find((step) => step.type === 'start') ?? { ...STEP_DEFAULTS.start },
-      items.find((step) => step.type === 'collect') ?? { ...STEP_DEFAULTS.collect },
-      ...middle,
-      items.find((step) => step.type === 'complete') ?? { ...STEP_DEFAULTS.complete },
-    ];
+    return items;
   };
 
   const moveStep = (sourceId: string, targetId: string) => {
@@ -215,7 +207,7 @@ export function AdminProcesses() {
     const nextStep = { ...STEP_DEFAULTS[type], id: `${STEP_DEFAULTS[type].id}-${Date.now()}` };
     const completeIndex = steps.findIndex((step) => step.type === 'complete');
     const next = [...steps];
-    const insertAt = type === 'machine_review' ? 2 : completeIndex;
+    const insertAt = type === 'machine_review' ? 1 : completeIndex;
     next.splice(insertAt, 0, nextStep);
     setSteps(normalizeSteps(next));
     setSelectedStepId(nextStep.id);
@@ -416,7 +408,7 @@ export function AdminProcesses() {
                     <span className="process-step-icon" style={{ color: meta.color, background: `${meta.color}15` }}>{meta.icon}</span>
                     <div className="process-step-copy"><b>{step.name}</b><span>{meta.label} · {step.assignee}{!step.enabled ? ' · 已停用' : ''}</span></div>
                     {hasError && <Tag color="error">待配置</Tag>}
-                    {step.fixed ? <Tag>固定工序</Tag> : <DragOutlined className="process-drag-handle" />}
+                    <DragOutlined className="process-drag-handle" />
                   </article>
                 );
               })}
@@ -426,13 +418,13 @@ export function AdminProcesses() {
           <aside className="process-step-settings">
             <div className="process-panel-title"><SettingOutlined /> 工序配置</div>
             {selectedStep && <>
-              <div className="process-settings-heading"><span className="process-step-icon" style={{ color: STEP_META[selectedStep.type].color, background: `${STEP_META[selectedStep.type].color}15` }}>{STEP_META[selectedStep.type].icon}</span><div><b>{STEP_META[selectedStep.type].label}</b><span>{selectedStep.fixed ? '系统固定工序' : '可配置工序'}</span></div></div>
+              <div className="process-settings-heading"><span className="process-step-icon" style={{ color: STEP_META[selectedStep.type].color, background: `${STEP_META[selectedStep.type].color}15` }}>{STEP_META[selectedStep.type].icon}</span><div><b>{STEP_META[selectedStep.type].label}</b><span>可配置工序</span></div></div>
               <div className="process-settings-form">
                 <label><span>工序名称</span><Input value={selectedStep.name} maxLength={32} onChange={(event) => updateSelectedStep({ name: event.target.value })} /></label>
-                <label><span>启用状态</span><div className="process-switch-row"><Switch checked={selectedStep.enabled} disabled={selectedStep.fixed} onChange={(enabled) => updateSelectedStep({ enabled })} /><small>{selectedStep.enabled ? '参与流程执行' : '暂不参与执行'}</small></div></label>
+                <label><span>启用状态</span><div className="process-switch-row"><Switch checked={selectedStep.enabled} disabled={selectedStep.fixed && selectedStep.type !== 'machine_review'} onChange={(enabled) => updateSelectedStep({ enabled })} /><small>{selectedStep.enabled ? '参与流程执行' : '暂不参与执行'}</small></div></label>
                 <label className={stepErrors.includes(selectedStep.id) ? 'has-error' : ''}><span>执行角色</span><Select value={selectedStep.assignee || undefined} status={stepErrors.includes(selectedStep.id) ? 'error' : undefined} onChange={(assignee) => updateSelectedStep({ assignee })} options={['系统自动', '采集用户', '复检人员', '质检人员', '项目管理员'].map((value) => ({ value, label: value }))} /></label>
                 {!['start', 'complete'].includes(selectedStep.type) && <Row gutter={10}><Col span={12}><label><span>处理时限</span><div className="process-number-field"><InputNumber min={1} max={168} value={selectedStep.timeout} onChange={(timeout) => updateSelectedStep({ timeout: timeout ?? 1 })} /><span>小时</span></div></label></Col><Col span={12}><label><span>重试次数</span><div className="process-number-field"><InputNumber min={0} max={5} value={selectedStep.retry} onChange={(retry) => updateSelectedStep({ retry: retry ?? 0 })} /><span>次</span></div></label></Col></Row>}
-                {['machine_review', 'quality'].includes(selectedStep.type) && <label><span>通过阈值</span><div className="process-number-field"><InputNumber min={0} max={100} value={selectedStep.threshold} onChange={(threshold) => updateSelectedStep({ threshold: threshold ?? 0 })} /><span>分</span></div></label>}
+                {selectedStep.type === 'machine_review' && <label><span>通过阈值</span><div className="process-number-field"><InputNumber min={0} max={100} value={selectedStep.threshold} onChange={(threshold) => updateSelectedStep({ threshold: threshold ?? 0 })} /><span>分</span></div></label>}
               </div>
               {!selectedStep.fixed && <Button danger type="text" icon={<DeleteOutlined />} onClick={() => removeStep(selectedStep.id)}>从流程中移除</Button>}
             </>}

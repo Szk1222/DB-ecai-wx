@@ -22,6 +22,7 @@ export interface RecordingHint {
 
 export interface Task {
   id: string;
+  authorizationConfigId?: string;
   title: string;
   type: TaskType;
   category: string;
@@ -163,6 +164,7 @@ export interface AuthorizationRecord {
 export const TASKS: Task[] = [
   {
     id: 't001',
+    authorizationConfigId: 'CFG-AUTH-002',
     title: '普通话朗读采集（新闻类）',
     type: 'voice',
     category: '语音采集',
@@ -205,6 +207,7 @@ export const TASKS: Task[] = [
   },
   {
     id: 't002',
+    authorizationConfigId: 'CFG-AUTH-001',
     title: '室内场景图片采集',
     type: 'image',
     category: '图片采集',
@@ -226,6 +229,7 @@ export const TASKS: Task[] = [
   },
   {
     id: 't003',
+    authorizationConfigId: 'CFG-AUTH-001',
     title: '多轮对话文本转写（客服场景）',
     type: 'text',
     category: '文本采集',
@@ -248,6 +252,7 @@ export const TASKS: Task[] = [
   },
   {
     id: 't004',
+    authorizationConfigId: 'CFG-AUTH-052',
     title: '方言采集（粤语·定向）',
     type: 'voice',
     category: '语音采集',
@@ -290,6 +295,7 @@ export const TASKS: Task[] = [
   },
   {
     id: 't005',
+    authorizationConfigId: 'CFG-AUTH-001',
     title: '电商评论情感采集',
     type: 'text',
     category: '文本采集',

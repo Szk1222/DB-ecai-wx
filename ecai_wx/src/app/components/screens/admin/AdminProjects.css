@@ -738,6 +738,243 @@
   box-shadow: 0 10px 26px rgba(36, 54, 72, .08);
 }
 
+.pm-procedure-config {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.pm-procedure-config > * + * {
+  padding-top: 28px;
+  border-top: 1px solid #e2e8ec;
+}
+
+.pm-project-config-card .ant-card-head-title > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pm-project-config-context {
+  margin-bottom: 18px;
+  padding: 10px 13px;
+  border-radius: 9px;
+  background: #f5f8fa;
+  color: #728195;
+  font-size: 12px;
+}
+
+.pm-current-template-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  padding: 18px;
+  border: 1px solid #dce9e5;
+  border-radius: 14px;
+  background: radial-gradient(circle at 92% 10%, rgba(49, 184, 149, .12), transparent 32%), linear-gradient(120deg, #fff, #f1f8f6);
+}
+
+.pm-current-template-hero__icon {
+  display: flex;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: #31b895;
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(49, 184, 149, .22);
+  font-size: 20px;
+}
+
+.pm-current-template-hero > div:nth-child(2) {
+  min-width: 0;
+  flex: 1;
+}
+
+.pm-current-template-hero h3 {
+  margin: 0 0 5px;
+  color: #2b4055;
+  font-size: 16px;
+}
+
+.pm-current-template-hero span {
+  color: #8693a1;
+  font-family: 'Cascadia Code', 'SFMono-Regular', sans-serif;
+  font-size: 10px;
+}
+
+.pm-current-template-hero .ant-tag {
+  margin: 0;
+}
+
+.pm-preview-section-title {
+  margin: 20px 0 10px;
+  color: #344a60;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.pm-process-preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+}
+
+.pm-process-preview > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pm-process-preview i {
+  color: #a1adba;
+  font-style: normal;
+}
+
+.pm-inline-edit-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid #e6ecef;
+}
+
+.pm-process-builder {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.pm-process-builder-list,
+.pm-process-step-settings {
+  padding: 14px;
+  border: 1px solid #e4eaee;
+  border-radius: 12px;
+  background: #f9fbfc;
+}
+
+.pm-process-builder-hint {
+  margin-bottom: 10px;
+  color: #8290a1;
+  font-size: 12px;
+}
+
+.pm-process-builder-item {
+  display: grid;
+  grid-template-columns: 34px 18px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  margin-top: 8px;
+  padding: 11px;
+  border: 1px solid #e3e9ed;
+  border-radius: 10px;
+  background: #fff;
+  cursor: grab;
+  transition: border-color .18s ease, box-shadow .18s ease, opacity .18s ease;
+}
+
+.pm-process-builder-item:hover,
+.pm-process-builder-item.is-selected {
+  border-color: #80cdb9;
+  box-shadow: 0 5px 14px rgba(48, 184, 148, .09);
+}
+
+.pm-process-builder-item.is-disabled {
+  opacity: .58;
+}
+
+.pm-process-builder-item > .anticon.is-locked {
+  color: #c2cad2;
+  cursor: not-allowed;
+}
+
+.pm-process-builder-index {
+  color: #98a5b3;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.pm-process-builder-item b,
+.pm-process-builder-item small {
+  display: block;
+}
+
+.pm-process-builder-item b {
+  color: #3b4f63;
+  font-size: 13px;
+}
+
+.pm-process-builder-item small {
+  margin-top: 2px;
+  color: #8996a5;
+  font-size: 11px;
+}
+
+.pm-process-step-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.pm-process-step-settings .pm-preview-section-title {
+  margin: 0;
+}
+
+.pm-process-step-settings label > span {
+  display: block;
+  margin-bottom: 6px;
+  color: #64758a;
+  font-size: 12px;
+}
+
+.pm-switch-setting {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.pm-switch-setting small {
+  color: #8492a2;
+}
+
+.pm-ability-setting-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 7px;
+}
+
+.pm-ability-setting-header > span {
+  color: #64758a;
+  font-size: 12px;
+}
+
+.pm-ability-setting-header > div {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-left: auto;
+}
+
+.pm-ability-setting-header small {
+  color: #8492a2;
+}
+
+@media (max-width: 900px) {
+  .pm-process-builder {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 960px) {
   .pm-hero-actions {
     position: static;

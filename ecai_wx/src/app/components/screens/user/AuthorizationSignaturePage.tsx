@@ -5,7 +5,7 @@ import { createSignedAuthorizationAgreement } from '../../../data/authorizationA
 import { useApp } from '../../../context/AppContext';
 
 export function AuthorizationSignaturePage() {
-  const { navigate, selectedAuthorizationId, saveSignedAgreement } = useApp();
+  const { navigate, selectedAuthorizationId, selectedTaskId, saveSignedAgreement, authorizationReturnScreen } = useApp();
   const record = AUTHORIZATION_RECORDS.find((item) => item.id === selectedAuthorizationId) ?? AUTHORIZATION_RECORDS[0];
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawingRef = useRef(false);
@@ -83,7 +83,11 @@ export function AuthorizationSignaturePage() {
       const signatureDataUrl = canvasRef.current.toDataURL('image/png');
       const agreement = await createSignedAuthorizationAgreement(record, signatureDataUrl);
       saveSignedAgreement(agreement);
-      navigate('authorization-agreement', { authorizationId: record.id });
+      if (authorizationReturnScreen === 'task-detail') {
+        navigate('task-detail', { taskId: selectedTaskId ?? undefined });
+      } else {
+        navigate('authorization-agreement', { authorizationId: record.id });
+      }
     } catch {
       setError('签署文件生成失败，请重新尝试');
     } finally {

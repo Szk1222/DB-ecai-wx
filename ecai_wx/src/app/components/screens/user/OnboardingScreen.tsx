@@ -23,6 +23,8 @@ function LogoIcon({ size = 64, dark = false }: { size?: number; dark?: boolean }
 }
 
 function AgreementModal({ onAgree, onDisagree }: { onAgree: () => void; onDisagree: () => void }) {
+  const [agreed, setAgreed] = useState(false);
+
   return (
     <div className="absolute inset-0 flex flex-col" style={{ zIndex: 50 }}>
       <div className="flex-1 bg-black/40" onClick={onDisagree} />
@@ -49,10 +51,26 @@ function AgreementModal({ onAgree, onDisagree }: { onAgree: () => void; onDisagr
           </p>
         </div>
 
+        <label className="mt-4 flex w-full cursor-pointer items-start gap-2 text-xs leading-5 text-gray-500">
+          <input
+            type="checkbox"
+            checked={agreed}
+            onChange={(event) => setAgreed(event.target.checked)}
+            className="mt-0.5 h-4 w-4 flex-shrink-0 accent-[#3DBFA0]"
+          />
+          <span>
+            我已阅读并同意
+            <span className="text-[#3DBFA0]">《用户服务协议》</span>
+            和
+            <span className="text-[#3DBFA0]">《隐私政策》</span>
+          </span>
+        </label>
+
         <button
-          className="mt-5 w-full py-3.5 rounded-2xl text-white text-base font-semibold"
-          style={{ background: '#3DBFA0' }}
+          className="mt-4 w-full py-3.5 rounded-2xl text-white text-base font-semibold transition-opacity"
+          style={{ background: '#3DBFA0', opacity: agreed ? 1 : 0.5 }}
           onClick={onAgree}
+          disabled={!agreed}
         >
           同意并继续
         </button>
@@ -72,6 +90,8 @@ export function OnboardingScreen() {
   const [tab, setTab] = useState<'login' | 'register'>('login');
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
+  const [loginAgreementAccepted, setLoginAgreementAccepted] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
   const [showAgreement, setShowAgreement] = useState(false);
   const [countdown, setCountdown] = useState(0);
@@ -88,9 +108,20 @@ export function OnboardingScreen() {
   }
 
   function handleSubmit() {
-    if (phone.length >= 11) {
+    if (phone.length < 11 || !code.trim()) return;
+    if (tab === 'register') {
       setShowAgreement(true);
+      return;
     }
+    if (loginAgreementAccepted) login();
+  }
+
+  function handleWechatLogin() {
+    if (tab === 'register') {
+      setShowAgreement(true);
+      return;
+    }
+    if (loginAgreementAccepted) login();
   }
 
   return (
@@ -115,7 +146,10 @@ export function OnboardingScreen() {
               background: tab === 'login' ? '#3DBFA0' : 'transparent',
               color: tab === 'login' ? '#fff' : 'rgba(255,255,255,0.6)',
             }}
-            onClick={() => setTab('login')}
+            onClick={() => {
+              setTab('login');
+              setLoginAgreementAccepted(false);
+            }}
           >
             登录
           </button>
@@ -125,7 +159,10 @@ export function OnboardingScreen() {
               background: tab === 'register' ? '#3DBFA0' : 'transparent',
               color: tab === 'register' ? '#fff' : 'rgba(255,255,255,0.6)',
             }}
-            onClick={() => setTab('register')}
+            onClick={() => {
+              setTab('register');
+              setLoginAgreementAccepted(false);
+            }}
           >
             注册
           </button>
@@ -133,7 +170,7 @@ export function OnboardingScreen() {
       </div>
 
       {/* Form area */}
-      <div className="flex-1 bg-white rounded-t-3xl -mt-6 px-6 pt-8 pb-6 flex flex-col">
+      <div className="flex-1 min-h-0 overflow-y-auto bg-white rounded-t-3xl -mt-6 px-6 pt-8 pb-6 flex flex-col">
         <div className="space-y-4">
           <div>
             <label className="block text-sm text-gray-500 mb-1.5">手机号码</label>
@@ -178,15 +215,51 @@ export function OnboardingScreen() {
               </button>
             </div>
           </div>
+
+          {tab === 'register' && (
+            <div>
+              <label className="block text-sm text-gray-500 mb-1.5">
+                邀请码 <span className="text-xs text-gray-400">（非必填）</span>
+              </label>
+              <div className="flex h-12 items-center rounded-xl px-4" style={{ background: '#F5F6F8' }}>
+                <input
+                  type="text"
+                  maxLength={20}
+                  placeholder="有邀请码可填写"
+                  value={inviteCode}
+                  onChange={(event) => setInviteCode(event.target.value.toUpperCase())}
+                  className="flex-1 bg-transparent text-sm uppercase text-gray-800 outline-none placeholder:text-gray-400"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
+        {tab === 'login' && (
+          <label className="mt-5 flex cursor-pointer items-start gap-2 text-xs leading-5 text-gray-500">
+            <input
+              type="checkbox"
+              checked={loginAgreementAccepted}
+              onChange={(event) => setLoginAgreementAccepted(event.target.checked)}
+              className="mt-0.5 h-4 w-4 flex-shrink-0 accent-[#3DBFA0]"
+            />
+            <span>
+              我已阅读并同意
+              <span className="text-[#3DBFA0]">《用户服务协议》</span>
+              和
+              <span className="text-[#3DBFA0]">《隐私政策》</span>
+            </span>
+          </label>
+        )}
+
         <button
-          className="mt-6 w-full py-3.5 rounded-2xl text-white text-base font-semibold transition-opacity"
+          className={`${tab === 'login' ? 'mt-3' : 'mt-6'} w-full py-3.5 rounded-2xl text-white text-base font-semibold transition-opacity`}
           style={{
             background: '#3DBFA0',
-            opacity: phone.length >= 11 ? 1 : 0.5,
+            opacity: phone.length >= 11 && Boolean(code.trim()) && (tab === 'register' || loginAgreementAccepted) ? 1 : 0.5,
           }}
           onClick={handleSubmit}
+          disabled={phone.length < 11 || !code.trim() || (tab === 'login' && !loginAgreementAccepted)}
         >
           {tab === 'login' ? '立即登录' : '立即注册'}
         </button>
@@ -200,7 +273,8 @@ export function OnboardingScreen() {
         <div className="mt-4 flex justify-center">
           <button
             className="flex flex-col items-center gap-1"
-            onClick={() => setShowAgreement(true)}
+            onClick={handleWechatLogin}
+            disabled={tab === 'login' && !loginAgreementAccepted}
           >
             <div
               className="w-11 h-11 rounded-full flex items-center justify-center"
@@ -211,16 +285,18 @@ export function OnboardingScreen() {
                 <path d="M15.65 9.5c-2.56 0-4.65 1.85-4.65 4.13 0 2.27 2.09 4.12 4.65 4.12.55 0 1.07-.09 1.56-.24l2.01.61-.7-1.92c.71-.73 1.13-1.6 1.13-2.57C19.65 11.35 17.89 9.5 15.65 9.5zm-1.15 2.75c.41 0 .75.34.75.75s-.34.75-.75.75-.75-.34-.75-.75.34-.75.75-.75zm2.5 0c.41 0 .75.34.75.75s-.34.75-.75.75-.75-.34-.75-.75.34-.75.75-.75z" />
               </svg>
             </div>
-            <span className="text-xs text-gray-500">微信登录</span>
+            <span className={`text-xs ${tab === 'login' && !loginAgreementAccepted ? 'text-gray-300' : 'text-gray-500'}`}>微信登录</span>
           </button>
         </div>
 
-        <p className="mt-auto pt-6 text-center text-xs text-gray-400 leading-5">
-          登录即表示同意{' '}
-          <span className="text-[#3DBFA0]">《用户服务协议》</span>
-          {' '}和{' '}
-          <span className="text-[#3DBFA0]">《隐私政策》</span>
-        </p>
+        {tab === 'register' && (
+          <p className="mt-auto pt-6 text-center text-xs text-gray-400 leading-5">
+            注册后将确认并同意
+            <span className="text-[#3DBFA0]">《用户服务协议》</span>
+            和
+            <span className="text-[#3DBFA0]">《隐私政策》</span>
+          </p>
+        )}
       </div>
 
       {showAgreement && (

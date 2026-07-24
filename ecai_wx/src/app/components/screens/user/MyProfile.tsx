@@ -115,6 +115,13 @@ export function MyProfile() {
           />
           <div className="h-px bg-gray-50 mx-4" />
           <MenuRow
+            icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="11" rx="3" stroke="#2E7D6B" strokeWidth="2"/><path d="M8 10V7a4 4 0 018 0v3M12 14v3" stroke="#2E7D6B" strokeWidth="2" strokeLinecap="round"/></svg>}
+            label="账号与安全"
+            value="安全"
+            onClick={() => navigate('account-security')}
+          />
+          <div className="h-px bg-gray-50 mx-4" />
+          <MenuRow
             icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.8-2.9 8.1-7 10-4.1-1.9-7-5.2-7-10V6l7-3z" stroke="#3B82F6" strokeWidth="2" strokeLinejoin="round"/><path d="M9 12l2 2 4-4" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
             label="授权中心"
             value="2项生效"

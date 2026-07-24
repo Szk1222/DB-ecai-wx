@@ -13,6 +13,7 @@ type Screen =
   | 'review-progress'
   | 'my-profile'
   | 'edit-profile'
+  | 'account-security'
   | 'authorization-center'
   | 'authorization-agreement'
   | 'authorization-signature'
@@ -30,10 +31,12 @@ interface AppState {
   selectedTaskId: string | null;
   selectedUserTaskId: string | null;
   selectedAuthorizationId: string | null;
+  authorizationReturnScreen: Screen | null;
+  editProfileReturnScreen: Screen | null;
   signedAgreements: Record<string, SignedAuthorizationAgreement>;
   user: typeof USER_PROFILE;
   updateProfile: (profile: Partial<typeof USER_PROFILE>) => void;
-  navigate: (screen: Screen, params?: { taskId?: string; userTaskId?: string; authorizationId?: string }) => void;
+  navigate: (screen: Screen, params?: { taskId?: string; userTaskId?: string; authorizationId?: string; returnTo?: Screen }) => void;
   saveSignedAgreement: (agreement: SignedAuthorizationAgreement) => void;
   setTab: (tab: Tab) => void;
   login: () => void;
@@ -49,6 +52,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [selectedUserTaskId, setSelectedUserTaskId] = useState<string | null>(null);
   const [selectedAuthorizationId, setSelectedAuthorizationId] = useState<string | null>(null);
+  const [authorizationReturnScreen, setAuthorizationReturnScreen] = useState<Screen | null>(null);
+  const [editProfileReturnScreen, setEditProfileReturnScreen] = useState<Screen | null>(null);
   const [signedAgreements, setSignedAgreements] = useState<Record<string, SignedAuthorizationAgreement>>({});
   const [user, setUser] = useState(USER_PROFILE);
 
@@ -56,11 +61,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setUser((current) => ({ ...current, ...profile }));
   }
 
-  function navigate(screen: Screen, params?: { taskId?: string; userTaskId?: string; authorizationId?: string }) {
+  function navigate(screen: Screen, params?: { taskId?: string; userTaskId?: string; authorizationId?: string; returnTo?: Screen }) {
     setCurrentScreen(screen);
     if (params?.taskId !== undefined) setSelectedTaskId(params.taskId);
     if (params?.userTaskId !== undefined) setSelectedUserTaskId(params.userTaskId);
     if (params?.authorizationId !== undefined) setSelectedAuthorizationId(params.authorizationId);
+    if (screen === 'authorization-agreement' && params?.returnTo !== undefined) setAuthorizationReturnScreen(params.returnTo);
+    if (screen === 'edit-profile') setEditProfileReturnScreen(params?.returnTo ?? null);
+    if (screen === 'authorization-center') setAuthorizationReturnScreen(null);
   }
 
   function saveSignedAgreement(agreement: SignedAuthorizationAgreement) {
@@ -96,6 +104,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         selectedTaskId,
         selectedUserTaskId,
         selectedAuthorizationId,
+        authorizationReturnScreen,
+        editProfileReturnScreen,
         signedAgreements,
         user,
         updateProfile,

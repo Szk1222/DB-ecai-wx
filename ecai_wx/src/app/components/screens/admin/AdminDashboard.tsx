@@ -3,8 +3,6 @@ import { Card, Row, Col, Statistic, Tag } from 'antd';
 import {
   UserOutlined,
   FileTextOutlined,
-  CheckCircleOutlined,
-  DollarOutlined,
   RiseOutlined,
   AuditOutlined,
 } from '@ant-design/icons';
@@ -19,8 +17,6 @@ const KPI_CARDS = [
   { label: '活跃用户', value: DASHBOARD_STATS.activeUsers.toLocaleString(), icon: <RiseOutlined />, color: '#3B82F6', bg: '#EEF4FF', change: '最近7天' },
   { label: '总提交条数', value: DASHBOARD_STATS.totalSubmissions.toLocaleString(), icon: <FileTextOutlined />, color: '#8B5CF6', bg: '#F5F3FF', change: '+280 今日' },
   { label: '待质检', value: DASHBOARD_STATS.pendingQC, icon: <AuditOutlined />, color: '#F59E0B', bg: '#FFF7E6', change: '需处理' },
-  { label: '已发放积分', value: `${(DASHBOARD_STATS.totalPointsIssued / 10000).toFixed(1)}万`, icon: <CheckCircleOutlined />, color: '#22C55E', bg: '#F0FDF4', change: '累计' },
-  { label: '已提现金额', value: `¥${(DASHBOARD_STATS.totalWithdrawn / 100).toFixed(0)}`, icon: <DollarOutlined />, color: '#EF4444', bg: '#FEF2F2', change: '累计' },
 ];
 
 const PIE_COLORS = ['#3DBFA0', '#3B82F6', '#F59E0B'];
@@ -31,7 +27,7 @@ export function AdminDashboard() {
       {/* KPI cards */}
       <Row gutter={[16, 16]}>
         {KPI_CARDS.map((card) => (
-          <Col key={card.label} xs={24} sm={12} lg={8} xl={4}>
+          <Col key={card.label} xs={24} sm={12} lg={6}>
             <Card size="small" style={{ borderRadius: 12 }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                 <div>

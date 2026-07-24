@@ -43,6 +43,8 @@ export interface Project {
   authCoverage: number;
   progress: number;
   description: string;
+  template: string;
+  templateVersion: string;
 }
 
 export interface ProjectTaskItem {
@@ -133,16 +135,19 @@ export const PROJECTS: Project[] = [
     id: 'prj-001', code: 'PRJ-2026-071', name: '普通话通用语音语料库建设', type: 'voice', status: 'active', manager: '周明',
     createdAt: '2026-06-18', startAt: '2026-07-01', endAt: '2026-09-30', taskCount: 3, jobCount: 8, dataCount: 428,
     authCoverage: 96, progress: 58, description: '面向通用语音识别训练的普通话朗读与自然对话数据采集项目。',
+    template: '普通话语音采集 · 标准版', templateVersion: 'v6',
   },
   {
     id: 'prj-002', code: 'PRJ-2026-052', name: '广东方言语音采集计划', type: 'voice', status: 'active', manager: '陈佳',
     createdAt: '2026-05-22', startAt: '2026-06-01', endAt: '2026-08-31', taskCount: 2, jobCount: 4, dataCount: 216,
     authCoverage: 100, progress: 74, description: '覆盖粤语及广东地区特色方言的多场景语音采集项目。',
+    template: '粤语自然对话录制', templateVersion: 'v3',
   },
   {
     id: 'prj-003', code: 'PRJ-2026-089', name: '电商场景多模态数据项目', type: 'mixed', status: 'pending', manager: '李婷',
     createdAt: '2026-07-12', startAt: '2026-08-01', endAt: '2026-11-15', taskCount: 2, jobCount: 0, dataCount: 0,
     authCoverage: 0, progress: 12, description: '建设电商客服、商品图片与评论文本的多模态训练数据集。',
+    template: '电商多模态数据采集', templateVersion: 'v1',
   },
 ];
 

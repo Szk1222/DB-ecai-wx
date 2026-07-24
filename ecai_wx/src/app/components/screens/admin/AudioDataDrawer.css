@@ -9,6 +9,229 @@
   background: #f7faf9;
 }
 
+.audio-detail-page {
+  min-height: calc(100vh - 112px);
+  padding: 4px 0 28px;
+}
+
+.audio-detail-page__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e3ebe8;
+}
+
+.audio-detail-page__toolbar .ant-btn {
+  padding-inline: 0;
+  color: #40576d;
+  font-weight: 650;
+}
+
+.audio-detail-page__toolbar .ant-tag {
+  margin: 0;
+}
+
+.audio-detail-page .audio-detail-layout {
+  grid-template-columns: 330px minmax(0, 1fr);
+}
+
+.audio-detail-review-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+}
+
+.audio-detail-page > .audio-detail-review-actions {
+  position: sticky;
+  z-index: 5;
+  bottom: 0;
+  margin-top: 16px;
+  padding: 14px 18px;
+  border: 1px solid #dce7e3;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 -8px 28px rgba(31, 60, 52, 0.09);
+  backdrop-filter: blur(12px);
+}
+
+.audio-detail-review-actions > span {
+  color: #748391;
+  font-size: 12px;
+}
+
+.audio-detail-review-actions .ant-btn-primary {
+  background: #31b895;
+}
+
+.audio-detail-layout {
+  display: grid;
+  grid-template-columns: 244px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.audio-detail-main {
+  min-width: 0;
+}
+
+.audio-recording-sidebar {
+  position: sticky;
+  top: 0;
+  overflow: hidden;
+  border: 1px solid #dfe9e6;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 7px 24px rgba(31, 60, 52, 0.045);
+}
+
+.audio-recording-sidebar__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 16px 12px;
+  border-bottom: 1px solid #edf2f0;
+  color: #2f4559;
+  font-size: 13px;
+  font-weight: 760;
+}
+
+.audio-recording-sidebar__head .ant-tag {
+  margin: 0;
+}
+
+.audio-recording-filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 12px;
+  border-bottom: 1px solid #edf2f0;
+  background: #f9fbfa;
+}
+
+.audio-recording-filters .ant-input-affix-wrapper,
+.audio-recording-filters > .ant-input {
+  grid-column: 1 / -1;
+}
+
+.audio-recording-filters .ant-btn {
+  grid-column: 1 / -1;
+}
+
+.audio-recording-sidebar__list {
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+}
+
+.audio-recording-item {
+  display: grid;
+  grid-template-columns: 27px minmax(0, 1fr);
+  gap: 9px;
+  width: 100%;
+  padding: 11px 9px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  background: transparent;
+  color: #354b60;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.audio-recording-item:hover {
+  border-color: #cfe5df;
+  background: #f4faf8;
+  transform: translateX(2px);
+}
+
+.audio-recording-item.is-active {
+  border-color: #a9dace;
+  background: linear-gradient(115deg, #eaf8f4, #f7fbfa);
+  box-shadow: inset 3px 0 #31b895;
+}
+
+.audio-recording-item__index {
+  display: flex;
+  width: 27px;
+  height: 27px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: #edf3f1;
+  color: #769085;
+  font-family: 'Cascadia Code', 'SFMono-Regular', sans-serif;
+  font-size: 10px;
+}
+
+.audio-recording-item.is-active .audio-recording-item__index {
+  background: #31b895;
+  color: #fff;
+}
+
+.audio-recording-item__body {
+  min-width: 0;
+}
+
+.audio-recording-item__body b,
+.audio-recording-item__body small,
+.audio-recording-item__body i {
+  display: block;
+}
+
+.audio-recording-item__body b {
+  font-size: 12px;
+}
+
+.audio-recording-item__body small {
+  overflow: hidden;
+  margin-top: 4px;
+  color: #84919f;
+  font-size: 10px;
+  line-height: 1.55;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.audio-recording-item__body i {
+  margin-top: 5px;
+  color: #7d918a;
+  font-size: 10px;
+  font-style: normal;
+}
+
+.audio-recording-item__statuses {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.audio-recording-item__statuses .ant-tag {
+  margin: 0;
+  font-size: 9px;
+  line-height: 17px;
+}
+
+.audio-recording-item__reason {
+  grid-column: 2;
+  overflow: hidden;
+  color: #d85c55;
+  font-size: 10px;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.audio-recording-sidebar__empty {
+  padding: 28px 12px;
+  color: #98a3ad;
+  font-size: 11px;
+  text-align: center;
+}
+
 .audio-detail-hero {
   position: relative;
   display: flex;
@@ -50,6 +273,13 @@
 .audio-detail-hero__content {
   z-index: 1;
   min-width: 0;
+  flex: 1;
+}
+
+.audio-detail-hero__authorization {
+  z-index: 1;
+  align-self: flex-start;
+  margin: 0;
 }
 
 .audio-detail-hero h2 {
@@ -225,6 +455,144 @@
   line-height: 1.65;
 }
 
+.audio-machine-score__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.audio-machine-score__header .audio-detail-section__title {
+  margin-bottom: 0;
+}
+
+.audio-machine-metrics {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.audio-machine-metric {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px 68px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f7faf9;
+  color: #354a5f;
+  font-size: 12px;
+}
+
+.audio-machine-metric__info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px 10px;
+}
+
+.audio-machine-metric__info strong {
+  color: #354a5f;
+  font-size: 12px;
+}
+
+.audio-machine-metric__info small {
+  color: #8a96a4;
+  font-weight: 400;
+}
+
+.audio-machine-metric__info em {
+  flex-basis: 100%;
+  color: #6478a6;
+  font-size: 10px;
+  font-style: normal;
+}
+
+.audio-machine-metric b {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.audio-machine-metric .ant-tag {
+  margin: 0;
+  text-align: center;
+}
+
+.audio-machine-summary {
+  margin: 12px 0 0;
+  color: #7c8998;
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+.audio-human-review__header,
+.audio-human-review__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.audio-human-review__header .audio-detail-section__title {
+  margin-bottom: 3px;
+}
+
+.audio-human-review__header small {
+  color: #8a96a4;
+  font-size: 10px;
+}
+
+.audio-human-review__header .ant-tag {
+  margin: 0;
+}
+
+.audio-human-review__label {
+  margin: 16px 0 9px;
+  color: #526679;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.audio-human-review__reasons {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px 12px;
+  width: 100%;
+  margin-bottom: 14px;
+  padding: 13px;
+  border-radius: 10px;
+  background: #f7faf9;
+}
+
+.audio-human-review__reasons .ant-checkbox-wrapper {
+  margin-inline-start: 0;
+  color: #5f7080;
+  font-size: 11px;
+}
+
+.audio-human-review__actions {
+  margin: 14px -16px -16px;
+  padding: 12px 16px;
+  border-top: 1px solid #e7eeeb;
+  background: #fbfdfc;
+  color: #536779;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.audio-human-review__actions .ant-btn-primary {
+  background: #31b895;
+}
+
+.audio-human-review__readonly-reason {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #f7faf9;
+  color: #687988;
+  font-size: 11px;
+  line-height: 1.65;
+}
+
 @media (max-width: 640px) {
   .audio-status-grid {
     grid-template-columns: 1fr;
@@ -232,5 +600,22 @@
 
   .audio-detail-drawer .ant-drawer-content-wrapper {
     width: 100% !important;
+  }
+
+  .audio-detail-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .audio-recording-sidebar {
+    position: static;
+  }
+
+  .audio-recording-sidebar__list {
+    display: flex;
+    overflow-x: auto;
+  }
+
+  .audio-recording-item {
+    min-width: 205px;
   }
 }

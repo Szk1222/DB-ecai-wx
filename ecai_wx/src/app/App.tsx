@@ -11,6 +11,7 @@ import { CollectImage } from './components/screens/user/CollectImage';
 import { ReviewProgress } from './components/screens/user/ReviewProgress';
 import { MyProfile } from './components/screens/user/MyProfile';
 import { EditProfile } from './components/screens/user/EditProfile';
+import { AccountSecurity } from './components/screens/user/AccountSecurity';
 import { AuthorizationCenter } from './components/screens/user/AuthorizationCenter';
 import { AuthorizationAgreementPage } from './components/screens/user/AuthorizationAgreementPage';
 import { AuthorizationSignaturePage } from './components/screens/user/AuthorizationSignaturePage';
@@ -34,6 +35,7 @@ function UserApp() {
     case 'review-progress': return <ReviewProgress />;
     case 'my-profile':    return <MyProfile />;
     case 'edit-profile':  return <EditProfile />;
+    case 'account-security': return <AccountSecurity />;
     case 'authorization-center': return <AuthorizationCenter />;
     case 'authorization-agreement': return <AuthorizationAgreementPage />;
     case 'authorization-signature': return <AuthorizationSignaturePage />;

@@ -31,6 +31,7 @@ import {
   SearchOutlined,
 } from '@ant-design/icons';
 import { ConfigCreateDrawer, CreatedConfigPayload } from './ConfigCreateDrawer';
+import { DEFAULT_MODEL_THRESHOLDS, MODEL_SCORING_METRICS } from './modelScoringPolicy';
 import './AdminConfig.css';
 
 type ModelStatus = 'online' | 'offline' | 'testing';
@@ -133,23 +134,13 @@ const STATUS_META = {
   testing: { label: '检测中', color: 'processing' },
 };
 
-const DEFAULT_THRESHOLDS = {
-  clarity: 85,
-  completeness: 92,
-  transcriptMatch: 95,
-  noiseLimit: 70,
-  pauseDuration: 2,
-  autoPass: 90,
-  manualReview: 75,
-};
-
 export function AdminModels() {
   const [models, setModels] = useState(INITIAL_MODELS);
   const [search, setSearch] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<ModelItem | null>(null);
-  const [thresholds, setThresholds] = useState(DEFAULT_THRESHOLDS);
+  const [thresholds, setThresholds] = useState(DEFAULT_MODEL_THRESHOLDS);
   const [form] = Form.useForm();
 
   const filtered = useMemo(() => models.filter((model) => !search || [model.name, model.code, model.provider].some((value) => value.toLowerCase().includes(search.toLowerCase()))), [models, search]);
@@ -272,7 +263,7 @@ export function AdminModels() {
   );
 
   const scoringPolicy = (
-    <Card className="admin-config-panel" title="模型判定阈值" extra={<Space><Button onClick={() => setThresholds(DEFAULT_THRESHOLDS)}>恢复默认</Button><Button type="primary" style={{ background: '#30B894' }} onClick={() => message.success('判定策略已保存')}>保存策略</Button></Space>}>
+    <Card className="admin-config-panel" title="模型判定阈值" extra={<Space><Button onClick={() => setThresholds(DEFAULT_MODEL_THRESHOLDS)}>恢复默认</Button><Button type="primary" style={{ background: '#30B894' }} onClick={() => message.success('判定策略已保存')}>保存策略</Button></Space>}>
       <div style={{ padding: '4px 0 10px', color: '#7D8A9C', fontSize: 12 }}>模板可以覆盖部分阈值；此处作为全局默认值。模型检测结果与人工质检标签共用同一判定口径。</div>
       <Row gutter={[14, 14]} style={{ marginTop: 8 }}>
         {[
@@ -287,6 +278,10 @@ export function AdminModels() {
             <div className="model-score-card">
               <div className="model-score-top"><span className="model-score-title">{item.title}</span><span className="model-score-value">{(thresholds as any)[item.key]}{item.suffix}</span></div>
               <Slider min={item.min} max={item.max} step={item.step || 1} value={(thresholds as any)[item.key]} onChange={(value) => setThresholds((current) => ({ ...current, [item.key]: value }))} tooltip={{ formatter: (value) => `${value}${item.suffix}` }} />
+              {MODEL_SCORING_METRICS.find((metric) => metric.key === item.key)?.model && (() => {
+                const model = MODEL_SCORING_METRICS.find((metric) => metric.key === item.key)!.model;
+                return <Tag icon={<RobotOutlined />} color="blue" style={{ marginBottom: 7 }}>{model.name} · {model.version}</Tag>;
+              })()}
               <div className="admin-stat-note">{item.note}</div>
             </div>
           </Col>

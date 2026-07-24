@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from 'react';
-import { BadgeCheck, Check, CheckCircle2, KeyRound, LockKeyhole, ShieldCheck, UserCheck, XCircle } from 'lucide-react';
-import { TASKS } from '../../../data/mockData';
+import React, { useEffect, useMemo, useState } from 'react';
+import { BadgeCheck, Check, CheckCircle2, FileSignature, Fingerprint, KeyRound, LockKeyhole, MessageSquareText, ShieldCheck, UserCheck, XCircle } from 'lucide-react';
+import { AUTHORIZATION_RECORDS, TASKS } from '../../../data/mockData';
+import { PROJECT_CONFIGS } from '../admin/projectData';
 import { useApp } from '../../../context/AppContext';
 
 function BackButton() {
@@ -15,13 +16,44 @@ function BackButton() {
 }
 
 export function TaskDetail() {
-  const { selectedTaskId, navigate, user } = useApp();
+  const { selectedTaskId, navigate, user, signedAgreements } = useApp();
   const task = TASKS.find((item) => item.id === selectedTaskId) ?? TASKS[0];
-  const [accepted, setAccepted] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
   const [inviteVerified, setInviteVerified] = useState(Boolean(task.directedAccess?.userInDispatchList));
   const [codeError, setCodeError] = useState('');
   const [claimed, setClaimed] = useState(false);
+  const [smsCode, setSmsCode] = useState('');
+  const [smsSent, setSmsSent] = useState(false);
+  const [smsCountdown, setSmsCountdown] = useState(0);
+  const [smsVerified, setSmsVerified] = useState(() => sessionStorage.getItem(`task-auth-sms:${task.id}`) === 'true');
+  const [faceVerified, setFaceVerified] = useState(() => sessionStorage.getItem(`task-auth-face:${task.id}`) === 'true');
+  const [basicAuthorizationAccepted, setBasicAuthorizationAccepted] = useState(false);
+
+  const authorizationConfig = PROJECT_CONFIGS.find((item) => item.id === task.authorizationConfigId)?.authorization;
+  const authorizationMethods = authorizationConfig?.verificationMethods ?? [];
+  const requiresSignature = Boolean(authorizationConfig?.signatureRequired) || authorizationMethods.some((method) => method.includes('签名'));
+  const requiresFace = authorizationMethods.some((method) => method.includes('人脸'));
+  const requiresSms = authorizationMethods.some((method) => method.includes('短信'));
+  const signatureRecord = requiresSignature
+    ? AUTHORIZATION_RECORDS.find((record) => record.requiresSignature && record.projectId === PROJECT_CONFIGS.find((item) => item.id === task.authorizationConfigId)?.projectId)
+    : undefined;
+  const signatureVerified = !requiresSignature || Boolean(signatureRecord && signedAgreements[signatureRecord.id]);
+  const hasConfiguredVerification = requiresSignature || requiresFace || requiresSms;
+  const authorizationReady = hasConfiguredVerification
+    ? signatureVerified && (!requiresFace || faceVerified) && (!requiresSms || smsVerified)
+    : basicAuthorizationAccepted;
+  const hasBoundPhone = Boolean(user.phone?.trim()) && user.phone !== '未绑定';
+  const maskedPhone = hasBoundPhone
+    ? (/^\d{11}$/.test(user.phone) ? `${user.phone.slice(0, 3)}****${user.phone.slice(-4)}` : user.phone)
+    : '';
+
+  useEffect(() => {
+    if (smsCountdown <= 0) return;
+    const timer = window.setInterval(() => {
+      setSmsCountdown((current) => current <= 1 ? 0 : current - 1);
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [smsCountdown]);
 
   const typeLabel = task.type === 'voice' ? '语音采集' : task.type === 'text' ? '文本采集' : '图片采集';
   const collectScreen = task.type === 'voice' ? 'collect-voice' : task.type === 'text' ? 'collect-text' : 'collect-image';
@@ -36,7 +68,7 @@ export function TaskDetail() {
 
   const hallEligible = !task.isDirected && qualificationItems.every((item) => item.matched);
   const accessReady = task.isDirected ? inviteVerified : hallEligible;
-  const canClaim = accepted && accessReady && !claimed;
+  const canClaim = authorizationReady && accessReady && !claimed;
 
   function verifyInviteCode() {
     const expected = task.directedAccess?.inviteCode;
@@ -55,10 +87,27 @@ export function TaskDetail() {
     window.setTimeout(() => navigate(collectScreen as any, { taskId: task.id }), 650);
   }
 
+  function verifyFace() {
+    setFaceVerified(true);
+    sessionStorage.setItem(`task-auth-face:${task.id}`, 'true');
+  }
+
+  function verifySms() {
+    if (!hasBoundPhone || !smsSent || smsCode.trim().length < 4) return;
+    setSmsVerified(true);
+    sessionStorage.setItem(`task-auth-sms:${task.id}`, 'true');
+  }
+
+  function sendSmsCode() {
+    if (!hasBoundPhone || smsCountdown > 0) return;
+    setSmsSent(true);
+    setSmsCountdown(30);
+  }
+
   function actionLabel() {
     if (claimed) return '领取成功，正在进入任务…';
     if (!accessReady) return task.isDirected ? '验证定向资格后认领' : '暂不符合认领要求';
-    if (!accepted) return '勾选数据授权后认领';
+    if (!authorizationReady) return '完成数据授权后领取';
     return task.isDirected ? '确认认领定向任务' : '确认认领任务';
   }
 
@@ -139,13 +188,85 @@ export function TaskDetail() {
           </ul>
         </section>
 
-        <section className="bg-white rounded-2xl p-4">
-          <div className="flex items-center gap-2 mb-2"><ShieldCheck size={17} color="#3DBFA0" /><h3 className="text-sm font-semibold text-gray-800">数据授权</h3></div>
-          <p className="text-xs text-gray-500 leading-relaxed">参与本任务即视为授权平台将采集的数据用于人工智能模型训练。个人信息将按照隐私政策进行脱敏处理，不会公开披露。</p>
-          <label className="flex items-start gap-2 mt-3 cursor-pointer">
-            <input type="checkbox" checked={accepted} onChange={(event) => setAccepted(event.target.checked)} className="mt-0.5" style={{ accentColor: '#3DBFA0' }} />
-            <span className="text-xs text-gray-600">我已阅读并同意上述授权内容</span>
-          </label>
+        <section className="rounded-2xl border border-[#D8EAE5] bg-white p-4">
+          <div className="mb-2 flex items-center gap-2">
+            <ShieldCheck size={17} color="#3DBFA0" />
+            <h3 className="flex-1 text-sm font-semibold text-gray-800">领取前数据授权</h3>
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${authorizationReady ? 'bg-[#E8F7F4] text-[#278E75]' : 'bg-[#FFF4DE] text-[#A87518]'}`}>
+              {authorizationReady ? '授权已完成' : '待完成'}
+            </span>
+          </div>
+          <p className="text-xs leading-relaxed text-gray-500">
+            {authorizationConfig?.purpose ?? '授权平台将本任务采集的数据用于人工智能模型训练，并按隐私政策进行脱敏处理。'}
+          </p>
+
+          {hasConfiguredVerification ? (
+            <div className="mt-3 space-y-2">
+              {requiresSignature && signatureRecord && (
+                <AuthorizationStep
+                  icon={<FileSignature size={17} />}
+                  title="签署数据授权协议"
+                  description={`${authorizationConfig?.projectDisplayName ?? task.title} · ${PROJECT_CONFIGS.find((item) => item.id === task.authorizationConfigId)?.version ?? ''}`}
+                  completed={signatureVerified}
+                  actionLabel="去签署授权"
+                  onAction={() => navigate('authorization-agreement', { authorizationId: signatureRecord.id, taskId: task.id, returnTo: 'task-detail' })}
+                />
+              )}
+
+              {requiresFace && (
+                <AuthorizationStep
+                  icon={<Fingerprint size={17} />}
+                  title="本人身份人脸核验"
+                  description="用于确认授权人与当前账号为同一人"
+                  completed={faceVerified}
+                  actionLabel="开始核验"
+                  onAction={verifyFace}
+                />
+              )}
+
+              {requiresSms && (
+                <div className={`rounded-xl border p-3 ${smsVerified ? 'border-[#CFE9E2] bg-[#F3FBF9]' : 'border-[#E5E9EA] bg-[#F8FAFA]'}`}>
+                  <div className="flex items-start gap-2.5">
+                    <div className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${smsVerified ? 'bg-[#DDF4EF] text-[#299B81]' : 'bg-white text-[#607282]'}`}><MessageSquareText size={17} /></div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs font-semibold text-gray-700">手机号短信确认</p>
+                        {smsVerified && <span className="flex items-center gap-1 text-[10px] font-medium text-[#299B81]"><CheckCircle2 size={13} />已完成</span>}
+                      </div>
+                      <p className="mt-0.5 text-[10px] text-gray-400">
+                        {hasBoundPhone ? <>验证码将发送至当前绑定手机号（{maskedPhone}）</> : '当前账号未绑定手机号'}
+                      </p>
+                    </div>
+                  </div>
+                  {!smsVerified && !hasBoundPhone && (
+                    <button onClick={() => navigate('edit-profile', { taskId: task.id, returnTo: 'task-detail' })} className="mt-2.5 flex h-9 w-full items-center justify-center rounded-lg border border-[#BFDCD5] bg-white text-[11px] font-semibold text-[#278E75]">
+                      去绑定手机号
+                    </button>
+                  )}
+                  {!smsVerified && hasBoundPhone && (
+                    <div className="mt-2.5 flex h-10 items-center gap-2 rounded-lg border border-[#DDE5E7] bg-white px-2">
+                      <input value={smsCode} onChange={(event) => setSmsCode(event.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="输入短信验证码" className="min-w-0 flex-1 bg-transparent px-1 text-xs outline-none placeholder:text-gray-400" />
+                      <button onClick={sendSmsCode} disabled={smsCountdown > 0} className="whitespace-nowrap text-[11px] font-medium text-[#2FAE8E] disabled:text-gray-400">
+                        {smsCountdown > 0 ? `重新发送（${smsCountdown}s）` : smsSent ? '重新发送' : '获取验证码'}
+                      </button>
+                      <button onClick={verifySms} disabled={!smsSent || smsCode.length < 4} className="h-7 rounded-md bg-[#2E3D4F] px-2.5 text-[10px] text-white disabled:opacity-35">确认</button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ) : (
+            <label className="mt-3 flex cursor-pointer items-start gap-2">
+              <input type="checkbox" checked={basicAuthorizationAccepted} onChange={(event) => setBasicAuthorizationAccepted(event.target.checked)} className="mt-0.5" style={{ accentColor: '#3DBFA0' }} />
+              <span className="text-xs text-gray-600">我已阅读并同意上述授权内容</span>
+            </label>
+          )}
+
+          {!authorizationReady && (
+            <p className="mt-3 flex items-center gap-1.5 rounded-lg bg-[#FFF8EA] px-2.5 py-2 text-[10px] text-[#9B721F]">
+              <LockKeyhole size={12} />完成全部授权步骤后才可领取任务
+            </p>
+          )}
         </section>
         <div className="h-1" />
       </div>
@@ -155,6 +276,30 @@ export function TaskDetail() {
           {claimed && <Check size={16} className="inline mr-1.5 -mt-0.5" />}{actionLabel()}
         </button>
       </div>
+    </div>
+  );
+}
+
+function AuthorizationStep({ icon, title, description, completed, actionLabel, onAction }: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  completed: boolean;
+  actionLabel: string;
+  onAction: () => void;
+}) {
+  return (
+    <div className={`flex items-center gap-2.5 rounded-xl border p-3 ${completed ? 'border-[#CFE9E2] bg-[#F3FBF9]' : 'border-[#E5E9EA] bg-[#F8FAFA]'}`}>
+      <div className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${completed ? 'bg-[#DDF4EF] text-[#299B81]' : 'bg-white text-[#607282]'}`}>{icon}</div>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-semibold text-gray-700">{title}</p>
+        <p className="mt-0.5 truncate text-[10px] text-gray-400">{description}</p>
+      </div>
+      {completed ? (
+        <span className="flex flex-shrink-0 items-center gap-1 text-[10px] font-medium text-[#299B81]"><CheckCircle2 size={13} />已完成</span>
+      ) : (
+        <button onClick={onAction} className="flex-shrink-0 rounded-lg bg-[#2FAE8E] px-2.5 py-2 text-[10px] font-semibold text-white">{actionLabel}</button>
+      )}
     </div>
   );
 }

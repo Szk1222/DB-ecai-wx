@@ -4,14 +4,17 @@ import {
   Checkbox,
   Col,
   Drawer,
+  Dropdown,
   Form,
   Input,
   InputNumber,
   message,
+  Modal,
   Row,
   Select,
   Space,
   Switch,
+  Table,
   Tag,
   Upload,
 } from 'antd';
@@ -21,6 +24,7 @@ import {
   ArrowUpOutlined,
   CheckCircleFilled,
   DeleteOutlined,
+  DownOutlined,
   EditOutlined,
   FileProtectOutlined,
   FileTextOutlined,
@@ -55,6 +59,7 @@ export interface ConfigCreateProjectContext {
 export interface ConfigCreateDrawerProps {
   type: ConfigCreateType | null;
   open: boolean;
+  mode?: 'create' | 'edit';
   project?: ConfigCreateProjectContext;
   onClose: () => void;
   onCreated: (payload: CreatedConfigPayload) => void;
@@ -96,7 +101,7 @@ const QUALITY_OPTIONS = [
   '前后静音段不足',
 ];
 
-type DrawerStepType = 'start' | 'collect' | 'secondary_review' | 'machine_review' | 'quality' | 'acceptance' | 'complete';
+type DrawerStepType = 'start' | 'collect' | 'secondary_review' | 'machine_review' | 'acceptance' | 'complete';
 
 interface DrawerStep {
   id: string;
@@ -112,7 +117,6 @@ const STEP_META: Record<DrawerStepType, { label: string; icon: React.ReactNode; 
   collect: { label: '数据采集', icon: <UserOutlined />, color: '#4f6ef7', role: '采集用户' },
   secondary_review: { label: '二次复检', icon: <EditOutlined />, color: '#8b6bd6', role: '复检人员' },
   machine_review: { label: '智能审核', icon: <RobotOutlined />, color: '#3679c8', role: '系统自动' },
-  quality: { label: '人工质检', icon: <CheckCircleFilled />, color: '#e59a2d', role: '质检人员' },
   acceptance: { label: '项目验收', icon: <FileTextOutlined />, color: '#de6d78', role: '项目管理员' },
   complete: { label: '完成', icon: <CheckCircleFilled />, color: '#269879', role: '系统自动' },
 };
@@ -125,20 +129,23 @@ function createDrawerStep(type: DrawerStepType): DrawerStep {
     name: meta.label,
     role: meta.role,
     enabled: true,
-    fixed: ['start', 'collect', 'complete'].includes(type),
+    fixed: false,
   };
 }
 
-const defaultProcessSteps = () => ['start', 'collect', 'machine_review', 'quality', 'complete'].map((type) => createDrawerStep(type as DrawerStepType));
+const defaultProcessSteps = () => ['start', 'machine_review', 'collect', 'complete'].map((type) => createDrawerStep(type as DrawerStepType));
 
 function ConfigSection({ index, title, children }: { index: string; title: string; children: React.ReactNode }) {
   return <section className="shared-config-section"><div className="shared-config-section__title"><span>{index}</span>{title}</div>{children}</section>;
 }
 
-export function ConfigCreateDrawer({ type, open, project, onClose, onCreated }: ConfigCreateDrawerProps) {
+export function ConfigCreateDrawer({ type, open, mode = 'create', project, onClose, onCreated }: ConfigCreateDrawerProps) {
   const [form] = Form.useForm();
   const [steps, setSteps] = useState<DrawerStep[]>(defaultProcessSteps());
+  const [importListOpen, setImportListOpen] = useState(false);
+  const [fileImportOpen, setFileImportOpen] = useState(false);
   const [selectedStepId, setSelectedStepId] = useState('');
+  const [draggingStepId, setDraggingStepId] = useState<string | null>(null);
   const category = Form.useWatch('category', form) as ConfigBusinessCategory | undefined;
   const selectedStep = steps.find((step) => step.id === selectedStepId);
   const availableSteps = (['secondary_review', 'acceptance'] as DrawerStepType[]).filter((stepType) => !steps.some((step) => step.type === stepType));
@@ -172,6 +179,20 @@ export function ConfigCreateDrawer({ type, open, project, onClose, onCreated }: 
 
   const drawerMeta = type ? TYPE_META[type] : TYPE_META.template;
   const projectLabel = project ? <Tag color="cyan">当前项目：{project.name}</Tag> : null;
+  const importControl = (
+    <Dropdown
+      trigger={['click']}
+      menu={{
+        items: [
+          { key: 'file', label: '导入已有文件', icon: <UploadOutlined /> },
+          { key: 'list', label: '从已有列表中选择', icon: type === 'template' ? <FileTextOutlined /> : type === 'process' ? <NodeIndexOutlined /> : <RobotOutlined /> },
+        ],
+        onClick: ({ key }) => key === 'list' ? setImportListOpen(true) : setFileImportOpen(true),
+      }}
+    >
+      <Button icon={<UploadOutlined />}>导入 <DownOutlined /></Button>
+    </Dropdown>
+  );
 
   const addStep = (stepType: DrawerStepType) => {
     const nextStep = createDrawerStep(stepType);
@@ -186,13 +207,27 @@ export function ConfigCreateDrawer({ type, open, project, onClose, onCreated }: 
   const moveStep = (id: string, direction: -1 | 1) => {
     setSteps((current) => {
       const index = current.findIndex((step) => step.id === id);
-      if (index < 2 || index >= current.length - 1) return current;
+      if (index < 0) return current;
       const target = index + direction;
-      if (target < 2 || target >= current.length - 1) return current;
+      if (target < 0 || target >= current.length) return current;
       const next = [...current];
       [next[index], next[target]] = [next[target], next[index]];
       return next;
     });
+  };
+
+  const dropStep = (targetId: string) => {
+    if (!draggingStepId || draggingStepId === targetId) return;
+    setSteps((current) => {
+      const source = current.find((step) => step.id === draggingStepId);
+      const target = current.find((step) => step.id === targetId);
+      if (!source || !target || source.fixed || target.fixed) return current;
+      const next = current.filter((step) => step.id !== draggingStepId);
+      const targetIndex = next.findIndex((step) => step.id === targetId);
+      next.splice(targetIndex, 0, source);
+      return next;
+    });
+    setDraggingStepId(null);
   };
 
   const removeStep = (id: string) => {
@@ -219,7 +254,7 @@ export function ConfigCreateDrawer({ type, open, project, onClose, onCreated }: 
       id: `${prefix}-${Date.now().toString().slice(-8)}`,
       type,
       name: values.name.trim(),
-      version: type === 'authorization' || type === 'model' ? values.version : 'v1',
+      version: type === 'authorization' || type === 'model' ? values.version : type === 'template' ? values.version ?? 'v1' : 'v1',
       category: values.category,
       data: type === 'authorization' ? {
         ...values,
@@ -323,13 +358,13 @@ export function ConfigCreateDrawer({ type, open, project, onClose, onCreated }: 
       <ConfigSection index="02" title="工序编排">
         <div className="shared-process-toolbar">
           <Space wrap>{availableSteps.map((stepType) => <Button key={stepType} icon={<PlusOutlined />} onClick={() => addStep(stepType)}>添加{STEP_META[stepType].label}</Button>)}</Space>
-          <span>采集固定在首位，开始与完成不可移动</span>
+          <span>所有工序默认开启，可自由调整执行顺序</span>
         </div>
         <div className="shared-process-layout">
           <div className="shared-process-list">
             {steps.map((step, index) => {
               const meta = STEP_META[step.type];
-              return <div role="button" tabIndex={0} className={selectedStepId === step.id ? 'is-selected' : ''} key={step.id} onClick={() => setSelectedStepId(step.id)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') setSelectedStepId(step.id); }}><span className="shared-process-index">{String(index + 1).padStart(2, '0')}</span><i style={{ color: meta.color, background: `${meta.color}14` }}>{meta.icon}</i><div><b>{step.name}</b><small>{step.role}{!step.enabled ? ' · 已停用' : ''}</small></div>{step.fixed ? <Tag>固定</Tag> : <Space size={0}><Button type="text" size="small" icon={<ArrowUpOutlined />} disabled={index <= 2} onClick={(event) => { event.stopPropagation(); moveStep(step.id, -1); }} /><Button type="text" size="small" icon={<ArrowDownOutlined />} disabled={index >= steps.length - 2} onClick={(event) => { event.stopPropagation(); moveStep(step.id, 1); }} /></Space>}</div>;
+              return <div role="button" tabIndex={0} draggable className={selectedStepId === step.id ? 'is-selected' : ''} key={step.id} onDragStart={() => setDraggingStepId(step.id)} onDragOver={(event) => event.preventDefault()} onDrop={() => dropStep(step.id)} onClick={() => setSelectedStepId(step.id)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') setSelectedStepId(step.id); }}><span className="shared-process-index">{String(index + 1).padStart(2, '0')}</span><i style={{ color: meta.color, background: `${meta.color}14` }}>{meta.icon}</i><div><b>{step.name}</b><small>{step.role}{!step.enabled ? ' · 已停用' : ''}</small></div><Space size={0}><Button type="text" size="small" icon={<ArrowUpOutlined />} disabled={index === 0} onClick={(event) => { event.stopPropagation(); moveStep(step.id, -1); }} /><Button type="text" size="small" icon={<ArrowDownOutlined />} disabled={index === steps.length - 1} onClick={(event) => { event.stopPropagation(); moveStep(step.id, 1); }} /></Space></div>;
             })}
           </div>
           <div className="shared-step-editor">
@@ -337,8 +372,8 @@ export function ConfigCreateDrawer({ type, open, project, onClose, onCreated }: 
               <div className="shared-step-editor__heading"><span style={{ color: STEP_META[selectedStep.type].color }}>{STEP_META[selectedStep.type].icon}</span><b>{STEP_META[selectedStep.type].label}</b></div>
               <label>工序名称<Input value={selectedStep.name} maxLength={32} onChange={(event) => updateStep({ name: event.target.value })} /></label>
               <label>执行角色<Select value={selectedStep.role} onChange={(role) => updateStep({ role })} options={['系统自动', '采集用户', '复检人员', '质检人员', '项目管理员'].map((value) => ({ value, label: value }))} /></label>
-              <label>启用状态<div><Switch checked={selectedStep.enabled} disabled={selectedStep.fixed} onChange={(enabled) => updateStep({ enabled })} /><span>{selectedStep.enabled ? '参与执行' : '暂不执行'}</span></div></label>
-              {!selectedStep.fixed && <Button danger type="text" icon={<DeleteOutlined />} onClick={() => removeStep(selectedStep.id)}>移除工序</Button>}
+              <label>{selectedStep.type === 'machine_review' ? '启用模型智能审核' : '启用状态'}<div><Switch checked={selectedStep.enabled} onChange={(enabled) => updateStep({ enabled })} /><span>{selectedStep.type === 'machine_review' ? selectedStep.enabled ? '模型参与流程执行' : '已跳过模型审核' : selectedStep.enabled ? '参与执行' : '暂不执行'}</span></div></label>
+              <Button danger type="text" icon={<DeleteOutlined />} onClick={() => removeStep(selectedStep.id)}>移除工序</Button>
             </>}
           </div>
         </div>
@@ -380,9 +415,11 @@ export function ConfigCreateDrawer({ type, open, project, onClose, onCreated }: 
   );
 
   return (
+    <>
     <Drawer
       className="shared-config-drawer"
-      title={<div className="shared-config-title"><span style={{ color: drawerMeta.color, background: `${drawerMeta.color}14` }}>{drawerMeta.icon}</span><div><b>{drawerMeta.title}</b>{projectLabel}</div></div>}
+      title={<div className="shared-config-title"><span style={{ color: drawerMeta.color, background: `${drawerMeta.color}14` }}>{drawerMeta.icon}</span><div><b>{mode === 'edit' && type === 'template' ? '编辑模板配置' : mode === 'edit' && type === 'process' ? '编辑流程配置' : drawerMeta.title}</b>{projectLabel}</div></div>}
+      extra={(type === 'template' || type === 'process' || type === 'model') ? importControl : undefined}
       size={type === 'process' ? 880 : 760}
       open={open}
       onClose={onClose}
@@ -395,7 +432,67 @@ export function ConfigCreateDrawer({ type, open, project, onClose, onCreated }: 
           {type === 'model' && modelContent}
         </Form>
       </div>
-      <footer className="shared-config-footer"><Button onClick={onClose}>取消</Button><Button type="primary" icon={<SaveOutlined />} onClick={submit} style={{ background: drawerMeta.color }}>创建配置</Button></footer>
+      <footer className="shared-config-footer"><Button onClick={onClose}>取消</Button><Button type="primary" icon={<SaveOutlined />} onClick={submit} style={{ background: drawerMeta.color }}>{mode === 'edit' ? '保存配置' : '创建配置'}</Button></footer>
     </Drawer>
+    <Modal
+      title={type === 'template' ? '选择已有模板配置' : type === 'process' ? '选择已有流程配置' : '选择已有模型配置'}
+      open={importListOpen}
+      footer={null}
+      width={760}
+      onCancel={() => setImportListOpen(false)}
+    >
+      <Table
+        rowKey="id"
+        pagination={false}
+        dataSource={type === 'template' ? [
+          { id: 'TPL-240716-01', name: '普通话语音采集 · 标准版', version: 'v6', category: '语音采集', updatedAt: '2026-07-16 17:42' },
+          { id: 'TPL-240705-03', name: '粤语自然对话录制', version: 'v3', category: '语音采集', updatedAt: '2026-07-15 10:24' },
+          { id: 'TPL-240711-02', name: '客服场景文本改写', version: 'v2', category: '文本采集', updatedAt: '2026-07-14 16:08' },
+          { id: 'TPL-240529-04', name: '室内物品图片采集', version: 'v4', category: '图片采集', updatedAt: '2026-06-28 09:36' },
+        ] : type === 'process' ? [
+          { id: 'PROC-202607-01', name: '标准语音采集质检流程', version: 'v5', category: '语音采集', updatedAt: '2026-07-20 16:42' },
+          { id: 'PROC-202607-02', name: '自然对话采集二次复检流程', version: 'v3', category: '语音采集', updatedAt: '2026-07-18 11:08' },
+          { id: 'PROC-202607-03', name: '文本改写双重质检流程', version: 'v1', category: '文本采集', updatedAt: '2026-07-16 09:30' },
+        ] : [
+          { id: 'MOD-VOICE-01', name: '语音质量检测 Pro', version: 'v3.4.2', category: '语音质检', updatedAt: '2026-07-16 19:18' },
+          { id: 'MOD-ASR-02', name: '朗读一致性识别', version: 'v2.8.0', category: '语音识别', updatedAt: '2026-07-15 14:35' },
+          { id: 'MOD-TEXT-03', name: '文本合规与完整性', version: 'v1.9.6', category: '文本质检', updatedAt: '2026-07-14 11:20' },
+        ]}
+        columns={[
+          { title: type === 'template' ? '模板名称' : type === 'process' ? '流程名称' : '模型名称', dataIndex: 'name' },
+          { title: '编号', dataIndex: 'id', width: 155 },
+          { title: '版本', dataIndex: 'version', width: 90, render: (value: string) => <Tag color="cyan">{value}</Tag> },
+          { title: '分类', dataIndex: 'category', width: 100 },
+          { title: '最近更新', dataIndex: 'updatedAt', width: 150 },
+          {
+            title: '操作',
+            key: 'action',
+            width: 80,
+            render: (_: unknown, item: { id: string; name: string; version: string }) => <Button type="link" onClick={() => {
+              form.setFieldsValue({ name: item.name, version: item.version });
+              setImportListOpen(false);
+              message.success(`已导入“${item.name}”的配置信息`);
+            }}>选择</Button>,
+          },
+        ]}
+      />
+    </Modal>
+    <Modal title="导入已有配置文件" open={fileImportOpen} footer={null} onCancel={() => setFileImportOpen(false)}>
+      <Upload.Dragger
+        accept=".json,.yaml,.yml"
+        maxCount={1}
+        beforeUpload={(file) => {
+          form.setFieldsValue({ name: file.name.replace(/\.(json|ya?ml)$/i, '') });
+          message.success(`${file.name} 已导入，请检查配置内容`);
+          setFileImportOpen(false);
+          return false;
+        }}
+      >
+        <p className="ant-upload-drag-icon"><UploadOutlined /></p>
+        <p className="ant-upload-text">点击或拖拽配置文件到此处</p>
+        <p className="ant-upload-hint">支持 JSON、YAML 格式，导入后可继续编辑</p>
+      </Upload.Dragger>
+    </Modal>
+    </>
   );
 }

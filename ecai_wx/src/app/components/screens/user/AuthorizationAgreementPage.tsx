@@ -1,22 +1,20 @@
 import React from 'react';
-import { CheckCircle2, ChevronLeft, Download, FileText, LockKeyhole, PenLine, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, ChevronLeft, FileText, LockKeyhole, PenLine, ShieldCheck } from 'lucide-react';
 import { AUTHORIZATION_RECORDS } from '../../../data/mockData';
-import { resolveAgreementUrl } from '../../../data/authorizationAgreement';
 import { useApp } from '../../../context/AppContext';
 import { AgreementPdfPreview } from '../../common/AgreementPdfPreview';
 
 export function AuthorizationAgreementPage() {
-  const { navigate, selectedAuthorizationId, signedAgreements } = useApp();
+  const { navigate, selectedAuthorizationId, selectedTaskId, signedAgreements, authorizationReturnScreen } = useApp();
   const record = AUTHORIZATION_RECORDS.find((item) => item.id === selectedAuthorizationId) ?? AUTHORIZATION_RECORDS[0];
   const signed = signedAgreements[record.id];
-  const pdfUrl = resolveAgreementUrl(signed?.pdfUrl ?? record.agreementUrl ?? '/agreements/authorization-agreement.pdf');
   const isSigned = Boolean(signed) || (record.status === 'active' && Boolean(record.agreementUrl));
   const fileName = signed?.fileName ?? record.agreementFileName ?? '数据使用授权协议.pdf';
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-[#EEF2F3]">
       <header className="flex flex-shrink-0 items-center gap-3 border-b border-[#DDE5E7] bg-white px-4 py-3">
-        <button onClick={() => navigate('authorization-center')} className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F0F4F5]" aria-label="返回授权中心"><ChevronLeft size={18} color="#34495E" /></button>
+        <button onClick={() => authorizationReturnScreen === 'task-detail' ? navigate('task-detail', { taskId: selectedTaskId ?? undefined }) : navigate('authorization-center')} className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F0F4F5]" aria-label="返回"><ChevronLeft size={18} color="#34495E" /></button>
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#E8F7F4]"><FileText size={18} color="#2DA98A" /></div>
         <div className="min-w-0 flex-1"><h1 className="truncate text-sm font-semibold text-[#263A4D]">数据使用授权协议</h1><p className="mt-0.5 truncate text-[10px] text-gray-400">{record.project} · {record.version ?? 'v1.0'}</p></div>
         <span className={`rounded-full px-2 py-1 text-[9px] font-semibold ${isSigned ? 'bg-[#E8F7F4] text-[#278E75]' : 'bg-[#FFF5DF] text-[#B97A16]'}`}>{isSigned ? '已签署' : '待签署'}</span>
@@ -34,7 +32,6 @@ export function AuthorizationAgreementPage() {
       </div>
 
       <footer className="flex flex-shrink-0 gap-2 border-t border-[#DCE4E6] bg-white px-4 py-3">
-        {isSigned && <a href={pdfUrl} download={fileName} className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#D8E2E4] bg-white" aria-label="下载已签署协议"><Download size={18} color="#516779" /></a>}
         {isSigned ? (
           <div className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[#EAF2F0] text-xs font-semibold text-[#5B746E]"><LockKeyhole size={15} />已完成签署 · 仅查看</div>
         ) : (
