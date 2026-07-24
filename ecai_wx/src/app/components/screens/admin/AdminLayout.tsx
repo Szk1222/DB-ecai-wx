@@ -19,12 +19,13 @@ import { AdminSettle } from './AdminSettle';
 const { Sider, Header, Content } = Layout;
 
 type AdminPage = 'dashboard' | 'tasks' | 'users' | 'settle';
+const SHOW_SETTLEMENT_CENTER = false;
 
 const MENU_ITEMS = [
   { key: 'dashboard', icon: <DashboardOutlined />, label: '运营看板' },
   { key: 'tasks', icon: <OrderedListOutlined />, label: '项目管理' },
   { key: 'users', icon: <TeamOutlined />, label: '用户管理' },
-  { key: 'settle', icon: <AccountBookOutlined />, label: '结算中心' },
+  ...(SHOW_SETTLEMENT_CENTER ? [{ key: 'settle', icon: <AccountBookOutlined />, label: '结算中心' }] : []),
 ];
 
 const PAGE_TITLES: Record<AdminPage, string> = {

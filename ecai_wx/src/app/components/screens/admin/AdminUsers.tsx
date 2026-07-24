@@ -62,6 +62,7 @@ export function AdminUsers() {
       title: '等级',
       dataIndex: 'level',
       key: 'level',
+      hidden: true,
       width: 80,
       render: (level: number) => (
         <Tag style={{ background: `${LEVEL_COLORS[level]}20`, color: LEVEL_COLORS[level], borderColor: LEVEL_COLORS[level], fontWeight: 600 }}>
@@ -73,6 +74,7 @@ export function AdminUsers() {
       title: '积分',
       dataIndex: 'points',
       key: 'points',
+      hidden: true,
       width: 80,
       render: (v: number) => <span style={{ color: '#3DBFA0', fontWeight: 600 }}>{v.toLocaleString()}</span>,
     },
